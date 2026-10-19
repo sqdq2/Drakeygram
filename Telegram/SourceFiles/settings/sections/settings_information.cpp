@@ -1164,9 +1164,10 @@ void AccountsList::rebuild() {
 
 	const auto count = int(list.size());
 
-	_reorder->addPinnedInterval(
-		premiumLimit,
-		std::max(1, count - premiumLimit));
+	// Drakeygram: accounts are unlimited, so no locked (pinned) tail.
+	if (count > premiumLimit) {
+		_reorder->addPinnedInterval(premiumLimit, count - premiumLimit);
+	}
 
 	_addAccount->toggle(
 		(count < ::Main::Domain::kUnlimitedMaxAccounts),
