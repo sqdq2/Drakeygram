@@ -39,6 +39,12 @@ public:
 	static constexpr auto kMaxAccounts = 3;
 	static constexpr auto kPremiumMaxAccounts = 6;
 
+	// Drakeygram: practically unlimited number of logged-in accounts.
+	// Used for all real limit checks (storage, creation, UI) instead of
+	// the stock 3 / 6 (Premium) limits above, which are kept only for the
+	// Premium promo screens.
+	static constexpr auto kUnlimitedMaxAccounts = 1000;
+
 	explicit Domain(const QString &dataName);
 	~Domain();
 
