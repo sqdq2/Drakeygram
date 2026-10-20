@@ -1,4 +1,4 @@
-# Drakeygram (Unofficial client)
+# Drakeygram 
 
 Drakeygram is an **unofficial, independent** desktop client for the
 [Telegram][telegram] messaging service. It is **not** made, endorsed or
