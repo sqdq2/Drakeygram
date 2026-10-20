@@ -37,6 +37,13 @@ if (TDESKTOP_API_ID STREQUAL "0" OR TDESKTOP_API_HASH STREQUAL "")
     " ")
 endif()
 
+# Drakeygram is an independent build: the built-in updater fetches official
+# Telegram Desktop packages and would replace this app, so it is disabled
+# unless explicitly turned back on with -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF.
+if (NOT DEFINED DESKTOP_APP_DISABLE_AUTOUPDATE)
+    set(DESKTOP_APP_DISABLE_AUTOUPDATE ON CACHE BOOL "Disable the built-in updater.")
+endif()
+
 if (DESKTOP_APP_DISABLE_AUTOUPDATE)
     target_compile_definitions(Telegram PRIVATE TDESKTOP_DISABLE_AUTOUPDATE)
 endif()

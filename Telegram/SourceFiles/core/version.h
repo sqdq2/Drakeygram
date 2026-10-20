@@ -18,9 +18,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #endif // TDESKTOP_ALLOW_CLOSED_ALPHA
 
 // used in Updater.cpp and Setup.iss for Windows
-constexpr auto AppId = "{53F49750-6209-4FBF-9CA8-7A333C87D1ED}"_cs;
+constexpr auto AppId = "{0FDC2961-931D-4F82-BA67-4555B52E6099}"_cs;
 constexpr auto AppNameOld = "Telegram Win (Unofficial)"_cs;
-constexpr auto AppName = "Telegram Desktop"_cs;
+// Telegram API Terms of Service: an app title that contains "Telegram"
+// must be preceded by "Unofficial", so this build does not use that word.
+constexpr auto AppName = "Drakeygram (Unofficial client)"_cs;
 constexpr auto AppFile = "Telegram"_cs;
 constexpr auto AppVersion = 7003001;
 constexpr auto AppVersionStr = "7.3.1";
