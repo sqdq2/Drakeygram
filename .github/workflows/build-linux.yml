@@ -1,38 +1,42 @@
-name: Drakeygram Linux compile check
+name: Drakeygram Linux build
 
-# Manual only: a full build compiles all third-party libraries from source and
-# can take several hours, so it must never run on every push.
+# Manual only. Heavy third-party libraries are built in parallel jobs (one
+# runner each, so each gets its own 6 hour limit) and cached in the GitHub
+# container registry. The last job assembles the build image from those caches
+# and compiles Drakeygram.
 on:
   workflow_dispatch:
     inputs:
-      only_libs:
-        description: "Only build and cache the libraries (no Drakeygram build)."
+      compile:
+        description: "Compile Drakeygram after the libraries are built."
         type: boolean
-        default: false
+        default: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CACHE_REPO: ghcr.io/${{ github.repository_owner }}/drakeygram-cache
 
 jobs:
-  linux:
-    name: Rocky Linux 8 (Debug)
+  libs:
+    name: Library ${{ matrix.target }}
     runs-on: ubuntu-latest
     timeout-minutes: 355
-
-    env:
-      ONLY_CACHE: ${{ inputs.only_libs && 'true' || 'false' }}
-      IMAGE_TAG: tdesktop:centos_env
-
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [qt, webrtc, ffmpeg]
     steps:
       - name: Clone.
         uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - name: First set up.
+      - name: Generate Dockerfile.
         run: |
-          sudo apt update
           curl -sSL https://install.python-poetry.org | python3 -
-          curl -sSL https://github.com/ccache/ccache/releases/download/v4.13.6/ccache-4.13.6-linux-x86_64-glibc.tar.xz \
-          | sudo tar xJ -C /usr/local/bin --strip-components=1 ccache-4.13.6-linux-x86_64-glibc/ccache
-          echo "CCACHE_DIR=$RUNNER_TEMP/.tdesktop-cache" >> $GITHUB_ENV
           cd Telegram/build/docker/centos_env
           poetry install
           DOCKERFILE=$(DEBUG= LTO= poetry run gen_dockerfile)
@@ -44,55 +48,85 @@ jobs:
         with:
           tool-cache: true
 
-      - name: Set up Docker Buildx.
-        id: setup-buildx
-        uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-buildx-action@v4
 
-      - name: Libraries cache.
-        id: cache-libs
-        uses: actions/cache@v6
+      - uses: docker/login-action@v3
         with:
-          path: |
-            ${{ runner.temp }}/.buildx-cache
-            ${{ runner.temp }}/.mount-cache
-          key: ${{ runner.OS }}-libs-${{ hashFiles('Telegram/build/docker/centos_env/**') }}
-          restore-keys: ${{ runner.OS }}-libs-
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Restore Docker cache mounts.
-        uses: reproducible-containers/buildkit-cache-dance@5422eac04292c961a382e0f584ea0f03ad9da723
-        with:
-          builder: ${{ steps.setup-buildx.outputs.name }}
-          cache-dir: ${{ runner.temp }}/.mount-cache
-          dockerfile: Telegram/build/docker/centos_env/Dockerfile
-          skip-extraction: ${{ steps.cache-libs.outputs.cache-hit }}
-
-      - name: Libraries.
+      - name: Build ${{ matrix.target }}.
         uses: docker/build-push-action@v7
         with:
           context: Telegram/build/docker/centos_env
-          load: ${{ env.ONLY_CACHE == 'false' }}
-          tags: ${{ env.IMAGE_TAG }}
-          cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
-          cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+          target: ${{ matrix.target }}
+          cache-from: type=registry,ref=${{ env.CACHE_REPO }}:${{ matrix.target }}
+          cache-to: type=registry,ref=${{ env.CACHE_REPO }}:${{ matrix.target }},mode=max,image-manifest=true,oci-mediatypes=true
 
-      - name: Move cache.
+  build:
+    name: Build Drakeygram
+    needs: libs
+    if: ${{ inputs.compile }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      IMAGE_TAG: drakeygram:env
+    steps:
+      - name: Clone.
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: First set up.
         run: |
-          rm -rf ${{ runner.temp }}/.buildx-cache
-          mv ${{ runner.temp }}/.buildx-cache{-new,}
+          curl -sSL https://install.python-poetry.org | python3 -
+          curl -sSL https://github.com/ccache/ccache/releases/download/v4.13.6/ccache-4.13.6-linux-x86_64-glibc.tar.xz \
+          | sudo tar xJ -C /usr/local/bin --strip-components=1 ccache-4.13.6-linux-x86_64-glibc/ccache
+          echo "CCACHE_DIR=$RUNNER_TEMP/.drakeygram-cache" >> $GITHUB_ENV
+          cd Telegram/build/docker/centos_env
+          poetry install
+          DOCKERFILE=$(DEBUG= LTO= poetry run gen_dockerfile)
+          echo "$DOCKERFILE" > Dockerfile
+          rm -rf __pycache__
+
+      - name: Free up some disk space.
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6
+        with:
+          tool-cache: true
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assemble the build image from the library caches.
+        uses: docker/build-push-action@v7
+        with:
+          context: Telegram/build/docker/centos_env
+          load: true
+          tags: ${{ env.IMAGE_TAG }}
+          cache-from: |
+            type=registry,ref=${{ env.CACHE_REPO }}:qt
+            type=registry,ref=${{ env.CACHE_REPO }}:webrtc
+            type=registry,ref=${{ env.CACHE_REPO }}:ffmpeg
+            type=registry,ref=${{ env.CACHE_REPO }}:all
+          cache-to: type=registry,ref=${{ env.CACHE_REPO }}:all,mode=max,image-manifest=true,oci-mediatypes=true
 
       - name: Restore ccache.
         id: cache-tdesktop
-        if: env.ONLY_CACHE == 'false'
         uses: actions/cache/restore@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ${{ runner.OS }}-drakeygram-${{ github.run_id }}
           restore-keys: ${{ runner.OS }}-drakeygram-
 
-      # The test api_id is used only to make the compile check possible.
-      # Real builds must use their own credentials (see README.md).
-      - name: Drakeygram build.
-        if: env.ONLY_CACHE == 'false'
+      # The test api_id only makes the compile check possible. A real build
+      # must use your own credentials (see README.md).
+      - name: Compile Drakeygram.
         run: |
           ccache -z
           docker run --rm \
@@ -112,14 +146,13 @@ jobs:
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
 
       - name: Save ccache.
-        if: env.ONLY_CACHE == 'false' && always()
+        if: always()
         uses: actions/cache/save@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ${{ steps.cache-tdesktop.outputs.cache-primary-key }}
 
       - name: Check.
-        if: env.ONLY_CACHE == 'false'
         run: |
           filePath="out/Debug/Telegram"
           if test -f "$filePath"; then
