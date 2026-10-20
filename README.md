@@ -35,7 +35,29 @@ This project follows the [Telegram API Terms of Service][tos]:
 * The built-in updater is disabled by default, because it downloads official
   Telegram Desktop packages.
 
-## Building
+## One-command build
+
+Each script installs what it needs, clones this repository with its
+submodules, builds, and prints step-by-step progress (`[3/7] ...` with elapsed
+time; the compiler's own `[done/total]` counter is shown during compilation).
+A full log is written to `build-logs/`. You need your own API credentials
+(see above); the script asks for them if `TDESKTOP_API_ID` and
+`TDESKTOP_API_HASH` are not set, and never writes them to disk.
+
+| System | Command |
+| --- | --- |
+| Linux (needs Docker, installs it if you agree) | `curl -fsSL https://raw.githubusercontent.com/sqdq2/Drakeygram/main/scripts/build-linux.sh \| bash` |
+| macOS (needs Xcode from the App Store) | `curl -fsSL https://raw.githubusercontent.com/sqdq2/Drakeygram/main/scripts/build-macos.sh \| bash` |
+| Windows (PowerShell) | `irm https://raw.githubusercontent.com/sqdq2/Drakeygram/main/scripts/build-windows.ps1 -OutFile $env:TEMP\dg.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\dg.ps1` |
+
+Options: `--debug` (`-Debug` on Windows), `--yes` (`-Yes`), `--dir PATH`
+(`-Dir`), and `--test-credentials` (`-TestCredentials`) for a compile check with
+Telegram's test-only credentials. The Linux script also reuses cached
+libraries published by this repository's CI, which can turn a multi-hour
+library build into minutes. These scripts have not been run end to end yet.
+Read a script before piping it into a shell.
+
+## Building (manual)
 
 Follow the platform guides in [docs](docs/) (for example
 [docs/building-linux.md](docs/building-linux.md)) and pass your own credentials:

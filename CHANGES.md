@@ -12,3 +12,9 @@ been compiled or run.
 * Built-in updater disabled by default. (untested)
 * README rewritten with the unofficial-client and API disclosure.
 * Original app icon replaces the Telegram logo in `Telegram/Resources/art/icon*`.
+
+## Build scripts
+* `scripts/build-linux.sh`, `scripts/build-macos.sh`, `scripts/build-windows.ps1`:
+  one-command setup and build with progress output and logs. Syntax-checked
+  only (bash -n, shellcheck); not run end to end. The PowerShell script has not
+  been parsed or run at all.
