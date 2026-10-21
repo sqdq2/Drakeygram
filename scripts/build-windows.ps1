@@ -46,9 +46,9 @@ function Update-SessionPath {
 }
 function Install-WithWinget($id, $label, $extra) {
   Info "installing $label (winget)"
-  $args = @('install', '--id', $id, '-e', '--accept-package-agreements', '--accept-source-agreements')
-  if ($extra) { $args += $extra }
-  & winget @args
+  $wingetArgs = @('install', '--id', $id, '-e', '--accept-package-agreements', '--accept-source-agreements')
+  if ($extra) { $wingetArgs += $extra }
+  & winget @wingetArgs
   if ($LASTEXITCODE -ne 0) { Fail "winget could not install $label" }
   Update-SessionPath
 }
@@ -142,10 +142,17 @@ Stop-Step
 function Invoke-InVs($commandLine) {
   # Runs in a cmd.exe with the Visual Studio environment; output is streamed, hidden-secret filtered and logged.
   $inner = "call `"$vcvars`" $VcArg >nul && $commandLine"
-  & cmd /c $inner 2>&1 |
-    ForEach-Object { ($_.ToString()).Replace($Hash, '<hidden>') } |
-    Tee-Object -FilePath $Log -Append
-  if ($LASTEXITCODE -ne 0) { Fail "command failed (exit $LASTEXITCODE); see $Log" }
+  # Windows PowerShell 5.1 turns any stderr line of a native command into a terminating
+  # error under 'Stop' (compilers print warnings there), so relax it for this call only.
+  $previous = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    & cmd /c $inner 2>&1 |
+      ForEach-Object { ($_.ToString()).Replace($Hash, '<hidden>') } |
+      Tee-Object -FilePath $Log -Append
+    $code = $LASTEXITCODE
+  } finally { $ErrorActionPreference = $previous }
+  if ($code -ne 0) { Fail "command failed (exit $code); see $Log" }
 }
 
 # ---------- 5. libraries ----------

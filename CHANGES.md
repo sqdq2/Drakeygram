@@ -18,3 +18,7 @@ been compiled or run.
   one-command setup and build with progress output and logs. Syntax-checked
   only (bash -n, shellcheck); not run end to end. The PowerShell script has not
   been parsed or run at all.
+
+## Experimental options (Settings -> Experimental)
+* "Hide similar channels": hides the similar-channels suggestions under the
+  "you joined this channel" message. Off by default. (untested)

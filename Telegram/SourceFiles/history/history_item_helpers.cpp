@@ -43,6 +43,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_controller.h"
 #include "window/window_session_controller.h"
 #include "apiwrap.h"
+#include "base/options.h"
 #include "base/unixtime.h"
 #include "core/application.h"
 #include "core/click_handler_types.h" // ClickHandlerContext.
@@ -60,6 +61,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_layers.h"
 
 namespace {
+
+const char kOptionHideSimilarChannels[] = "hide-similar-channels";
+
+base::options::toggle HideSimilarChannels({
+	.id = kOptionHideSimilarChannels,
+	.name = "Hide similar channels",
+	.description = "Do not show the similar channels suggestions under the"
+		" \"you joined this channel\" message.",
+});
 
 bool PeerCallKnown(not_null<PeerData*> peer) {
 	if (peer->groupCall() != nullptr) {
@@ -1216,7 +1226,10 @@ not_null<HistoryItem*> GenerateJoinedMessage(
 		bool viaRequest) {
 	return history->makeMessage({
 		.id = history->owner().nextLocalMessageId(),
-		.flags = MessageFlag::Local | MessageFlag::ShowSimilarChannels,
+		.flags = (MessageFlag::Local
+			| (HideSimilarChannels.value()
+				? MessageFlag()
+				: MessageFlag::ShowSimilarChannels)),
 		.date = inviteDate,
 	}, GenerateJoinedText(history, inviter, viaRequest));
 }
