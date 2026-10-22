@@ -48,3 +48,9 @@ published apps; see README.md.
 * "Message filters" (history_view_element.cpp): hides incoming text messages
   containing a phrase listed in message-filters.txt in the app data folder.
   Hidden messages still exist; this only changes display. (untested)
+* "Custom monospace font" (core/application.cpp): font family from
+  mono-font.txt in the app data folder replaces the usual monospace fonts, via
+  Qt font substitution (lib_ui is untouched). Restart after changing. (untested)
+* Streamer mode now also covers the app's own popup notifications
+  (notifications_manager_default.cpp); system-native notifications cannot be
+  hidden this way. (untested)

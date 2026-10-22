@@ -105,6 +105,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "test/test_agent.h"
 
 #include <QtCore/QStandardPaths>
+#include <QtCore/QFile>
+#include <QtGui/QFont>
+#include <QtGui/QFontDatabase>
 #include <QtCore/QMimeDatabase>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
@@ -113,6 +116,43 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Core {
 namespace {
+
+const char kOptionMonoFont[] = "custom-mono-font";
+
+base::options::toggle CustomMonoFont({
+	.id = kOptionMonoFont,
+	.name = "Custom monospace font",
+	.description = "Use the font family written in \"mono-font.txt\" in the"
+		" app's data folder for code and monospaced text. Restart the app"
+		" after changing it.",
+});
+
+void ApplyCustomMonoFont() {
+	if (!CustomMonoFont.value()) {
+		return;
+	}
+	auto file = QFile(cWorkingDir() + u"mono-font.txt"_q);
+	if (!file.open(QIODevice::ReadOnly)) {
+		return;
+	}
+	const auto family = QString::fromUtf8(file.readAll()).trimmed();
+	if (family.isEmpty()) {
+		return;
+	}
+	const auto candidates = {
+		u"Cascadia Mono"_q,
+		u"Consolas"_q,
+		u"Liberation Mono"_q,
+		u"Menlo"_q,
+		u"Courier"_q,
+		QFontDatabase::systemFont(QFontDatabase::FixedFont).family(),
+	};
+	for (const auto &candidate : candidates) {
+		if (!candidate.isEmpty() && candidate != family) {
+			QFont::insertSubstitution(candidate, family);
+		}
+	}
+}
 
 constexpr auto kQuitPreventTimeoutMs = crl::time(1500);
 constexpr auto kAutoLockTimeoutLateMs = crl::time(3000);
@@ -314,6 +354,7 @@ void Application::run() {
 
 	startLocalStorage();
 
+	ApplyCustomMonoFont();
 	style::SetCustomFont(settings().customFontFamily());
 	style::internal::StartFonts();
 

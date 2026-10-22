@@ -44,10 +44,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_layers.h"
 #include "styles/style_window.h"
 
+#include "core/core_screenshot_protection.h"
+
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
 
 namespace Window {
+
+[[nodiscard]] bool StreamerModeEnabled();
+
 namespace Notifications {
 namespace Default {
 namespace {
@@ -520,6 +525,13 @@ Widget::Widget(
 	setAttribute(Qt::WA_OpaquePaintEvent);
 
 	Ui::Platform::InitOnTopPanel(this);
+
+	if (StreamerModeEnabled()) {
+		Core::App().screenshotProtection().addContentReason(
+			this,
+			rpl::single(true),
+			lifetime());
+	}
 
 	_a_opacity.start([this] { opacityAnimationCallback(); }, 0., 1., st::notifyFastAnim);
 }

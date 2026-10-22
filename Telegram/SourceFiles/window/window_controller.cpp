@@ -111,6 +111,10 @@ Show::operator bool() const {
 
 } // namespace
 
+bool StreamerModeEnabled() {
+	return StreamerMode.value();
+}
+
 Controller::Controller() : Controller(CreateArgs{ nullptr }) {
 }
 
