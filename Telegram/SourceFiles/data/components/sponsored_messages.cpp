@@ -10,6 +10,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_text_entities.h"
 #include "api/api_peer_search.h" // SponsoredSearchResult
 #include "apiwrap.h"
+#include "base/options.h"
 #include "core/click_handler_types.h"
 #include "data/data_channel.h"
 #include "data/data_document.h"
@@ -33,6 +34,18 @@ constexpr auto kMs = crl::time(1000);
 constexpr auto kRequestTimeLimit = 5 * 60 * crl::time(1000);
 
 const auto kFlaggedPreload = ((MediaPreload*)quintptr(0x01));
+
+const char kOptionHideSponsored[] = "hide-sponsored-messages";
+
+base::options::toggle HideSponsored({
+	.id = kOptionHideSponsored,
+	.name = "Hide sponsored messages",
+	.description = "Do not request or show sponsored messages in channels"
+		" and bot chats. Sponsored messages help fund Telegram and the"
+		" channel owners who share the revenue, and Telegram's API terms do"
+		" not allow hiding them in apps that are published, so use this for"
+		" personal builds only.",
+});
 
 [[nodiscard]] bool TooEarlyForRequest(crl::time received) {
 	return (received > 0) && (received + kRequestTimeLimit > crl::now());
@@ -302,7 +315,9 @@ HistoryItem *SponsoredMessages::injectItem(
 }
 
 bool SponsoredMessages::canHaveFor(not_null<History*> history) const {
-	if (history->peer->isChannel()) {
+	if (HideSponsored.value()) {
+		return false;
+	} else if (history->peer->isChannel()) {
 		return true;
 	} else if (const auto user = history->peer->asUser()) {
 		return user->isBot();
@@ -311,7 +326,8 @@ bool SponsoredMessages::canHaveFor(not_null<History*> history) const {
 }
 
 bool SponsoredMessages::canHaveFor(not_null<HistoryItem*> item) const {
-	return item->history()->peer->isBroadcast()
+	return !HideSponsored.value()
+		&& item->history()->peer->isBroadcast()
 		&& item->isRegular();
 }
 

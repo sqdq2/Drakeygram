@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "data/data_stories.h"
 
+#include "base/options.h"
 #include "base/unixtime.h"
 #include "apiwrap.h"
 #include "core/application.h"
@@ -29,6 +30,17 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Data {
 namespace {
+
+const char kOptionNoStoryViews[] = "no-story-views";
+
+base::options::toggle NoStoryViews({
+	.id = kOptionNoStoryViews,
+	.name = "Don't mark stories as viewed",
+	.description = "Watch stories without telling their authors that you"
+		" saw them. Stories still look viewed on this device. Telegram's API"
+		" terms do not allow this in apps that are published, so use it for"
+		" personal builds only.",
+});
 
 constexpr auto kMaxResolveTogether = 100;
 constexpr auto kIgnorePreloadAroundIfLoaded = 15;
@@ -1394,6 +1406,9 @@ void Stories::toggleHidden(
 void Stories::sendMarkAsReadRequest(
 		not_null<PeerData*> peer,
 		StoryId tillId) {
+	if (NoStoryViews.value()) {
+		return;
+	}
 	const auto peerId = peer->id;
 	_markReadRequests.emplace(peerId);
 	const auto finish = [=] {
@@ -1439,6 +1454,10 @@ void Stories::sendMarkAsReadRequests() {
 
 void Stories::sendIncrementViewsRequests() {
 	if (_incrementViewsPending.empty()) {
+		return;
+	} else if (NoStoryViews.value()) {
+		_incrementViewsPending.clear();
+		checkQuitPreventFinished();
 		return;
 	}
 	struct Prepared {

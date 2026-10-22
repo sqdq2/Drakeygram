@@ -66,6 +66,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "storage/storage_user_photos.h"
 #include "storage/storage_shared_media.h"
 #include "calls/calls_instance.h"
+#include "base/options.h"
 #include "base/unixtime.h"
 #include "window/window_session_controller.h"
 #include "window/window_controller.h"
@@ -79,6 +80,17 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Api {
 namespace {
+
+const char kOptionStayOffline[] = "stay-offline";
+
+base::options::toggle StayOffline({
+	.id = kOptionStayOffline,
+	.name = "Stay offline",
+	.description = "Never show yourself as online to other people, even"
+		" while the app is open and you are using it. Telegram's API terms"
+		" do not allow this in apps that are published, so use it for"
+		" personal builds only.",
+});
 
 constexpr auto kChannelGetDifferenceLimit = 100;
 
@@ -999,7 +1011,8 @@ void Updates::updateOnline(crl::time lastNonIdleTime, bool gotOtherOffline) {
 	});
 
 	const auto &config = _session->serverConfig();
-	bool isOnline = Core::App().hasActiveWindow(&session());
+	bool isOnline = !StayOffline.value()
+		&& Core::App().hasActiveWindow(&session());
 	int updateIn = config.onlineUpdatePeriod;
 	Assert(updateIn >= 0);
 	if (isOnline) {

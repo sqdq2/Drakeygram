@@ -23,6 +23,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_saved_sublist.h"
 #include "data/data_session.h"
 #include "data/data_user.h"
+#include "base/options.h"
 #include "base/unixtime.h"
 #include "base/random.h"
 #include "main/main_session.h"
@@ -39,6 +40,18 @@ namespace {
 
 constexpr auto kReadRequestTimeout = 3 * crl::time(1000);
 constexpr auto kReportDeliveriesPerRequest = 50;
+
+const char kOptionNoReadReceipts[] = "no-read-receipts";
+
+base::options::toggle NoReadReceipts({
+	.id = kOptionNoReadReceipts,
+	.name = "Don't send read receipts",
+	.description = "Chats are marked as read only on this device: the server"
+		" and other people are not told that you read their messages, and"
+		" the chats show as unread again after a restart. This includes the"
+		" \"Mark as read\" actions. Telegram's API terms do not allow this"
+		" in apps that are published, so use it for personal builds only.",
+});
 
 } // namespace
 
@@ -737,6 +750,12 @@ void Histories::sendReadRequests() {
 void Histories::sendReadRequest(not_null<History*> history, State &state) {
 	Expects(state.willReadTill > state.sentReadTill);
 
+	if (NoReadReceipts.value()) {
+		// Keep the chat read locally, but do not tell the server.
+		state.willReadTill = 0;
+		state.willReadWhen = 0;
+		return;
+	}
 	const auto tillId = state.sentReadTill = base::take(state.willReadTill);
 	state.willReadWhen = 0;
 	state.sentReadDone = false;

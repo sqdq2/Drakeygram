@@ -22,3 +22,11 @@ been compiled or run.
 ## Experimental options (Settings -> Experimental)
 * "Hide similar channels": hides the similar-channels suggestions under the
   "you joined this channel" message. Off by default. (untested)
+* "Don't send read receipts" (data_histories.cpp): chats are marked read only
+  locally; "Mark as read" actions also stay local. (untested)
+* "Don't send typing status" (api_send_progress.cpp). (untested)
+* "Stay offline" (api_updates.cpp): never reports the account as online. (untested)
+* "Don't mark stories as viewed" (data_stories.cpp). (untested)
+* "Hide sponsored messages" (sponsored_messages.cpp). (untested)
+All of these are off by default and are not allowed by Telegram's API terms in
+published apps; see README.md.

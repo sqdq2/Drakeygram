@@ -25,13 +25,16 @@ This project follows the [Telegram API Terms of Service][tos]:
   <https://my.telegram.org>. See [docs/api_credentials.md](docs/api_credentials.md).
   Do not ship builds that use the test credentials.
 * The name does not use "Telegram" and the official Telegram logo is not used.
-* Sponsored messages are shown as the official client shows them and are not
-  interfered with.
-* The following are deliberately **not** implemented, because the terms forbid
-  them: hiding read, online/last-seen or typing status ("ghost mode"),
-  preventing self-destructing content from disappearing, unlocking paid
-  Telegram Premium features locally, and bypassing a chat's copy or download
-  restrictions.
+* Some **optional, off-by-default** switches in Settings -> Experimental go
+  against the terms and are meant for personal builds only, never for
+  published ones: don't send read receipts, don't send typing status, stay
+  offline, don't mark stories as viewed, and hide sponsored messages. Using
+  them can get an `api_id` revoked or an account limited. They affect only
+  what you send or see yourself.
+* Deliberately **not** implemented, because they override other people's
+  choices: keeping self-destructing (view-once or timed) media after it
+  expires, and bypassing a channel's "restrict saving content" setting.
+  Unlocking Telegram Premium features locally is also not implemented.
 * The built-in updater is disabled by default, because it downloads official
   Telegram Desktop packages.
 

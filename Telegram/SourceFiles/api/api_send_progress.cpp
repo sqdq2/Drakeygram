@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history.h"
 #include "data/data_peer.h"
 #include "data/data_user.h"
+#include "base/options.h"
 #include "base/unixtime.h"
 #include "data/data_peer_values.h"
 #include "apiwrap.h"
@@ -22,6 +23,17 @@ constexpr auto kCancelTypingActionTimeout = crl::time(5000);
 constexpr auto kSendMySpeakingInterval = 3 * crl::time(1000);
 constexpr auto kSendMyTypingInterval = 5 * crl::time(1000);
 constexpr auto kSendTypingsToOfflineFor = TimeId(30);
+
+const char kOptionNoTypingStatus[] = "no-typing-status";
+
+base::options::toggle NoTypingStatus({
+	.id = kOptionNoTypingStatus,
+	.name = "Don't send typing status",
+	.description = "Do not show other people \"typing...\", \"recording a"
+		" voice message\" and similar status while you do it. Telegram's API"
+		" terms do not allow this in apps that are published, so use it for"
+		" personal builds only.",
+});
 
 } // namespace
 
@@ -109,7 +121,7 @@ bool SendProgressManager::updated(const Key &key, bool doing) {
 }
 
 void SendProgressManager::send(const Key &key, int progress) {
-	if (skipRequest(key)) {
+	if (NoTypingStatus.value() || skipRequest(key)) {
 		return;
 	}
 	using Type = SendProgressType;
