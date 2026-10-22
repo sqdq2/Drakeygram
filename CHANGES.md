@@ -63,3 +63,5 @@ published apps; see README.md.
 * "Keep deleted messages" now also appends each kept message (date, chat,
   sender, text) to deleted-messages.jsonl in the app data folder, so the
   history survives restarts as a file. (untested)
+* "Jump to beginning" (context menu, history_view_context_menu.cpp) and "Hide
+  messages from blocked users" (history_view_element.cpp). (untested)

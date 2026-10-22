@@ -84,6 +84,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
+const char kOptionHideBlocked[] = "hide-blocked-messages";
+
+base::options::toggle HideBlockedMessages({
+	.id = kOptionHideBlocked,
+	.name = "Hide messages from blocked users",
+	.description = "Fully hide messages written by users you have blocked,"
+		" instead of showing a collapsed placeholder.",
+});
+
 const char kOptionMessageFilters[] = "message-filters";
 
 base::options::toggle MessageFilters({
@@ -1669,6 +1678,10 @@ bool Element::isHiddenByGroup() const {
 
 bool Element::isHidden() const {
 	if (isHiddenByGroup()) {
+		return true;
+	} else if (HideBlockedMessages.value()
+		&& !data()->out()
+		&& data()->from()->isBlocked()) {
 		return true;
 	} else if (!MessageFilters.value() || data()->out()) {
 		return false;

@@ -128,6 +128,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
+const char kOptionJumpToBeginning[] = "jump-to-beginning";
+
+base::options::toggle JumpToBeginning({
+	.id = kOptionJumpToBeginning,
+	.name = "Jump to beginning",
+	.description = "Add \"Jump to beginning\" to the context menu of a"
+		" message, which opens the oldest part of the chat.",
+});
+
 const char kOptionMessageShot[] = "message-shot";
 
 base::options::toggle MessageShot({
@@ -1411,6 +1420,28 @@ void AddTopMessageActions(
 	AddViewStatisticsAction(menu, request, list);
 }
 
+void AddJumpToBeginningAction(
+		not_null<Ui::PopupMenu*> menu,
+		const ContextMenuRequest &request,
+		not_null<ListWidget*> list) {
+	const auto item = request.item;
+	if (!JumpToBeginning.value()
+		|| !item
+		|| !request.selectedItems.empty()
+		|| !item->isRegular()
+		|| item->history()->peer->isForum()) {
+		return;
+	}
+	const auto controller = list->controller();
+	const auto peer = item->history()->peer;
+	menu->addAction(u"Jump to beginning"_q, crl::guard(controller, [=] {
+		controller->showPeerHistory(
+			peer,
+			Window::SectionShow::Way::Forward,
+			MsgId(1));
+	}), &st::menuIconShowInChat);
+}
+
 void AddMessageShotAction(
 		not_null<Ui::PopupMenu*> menu,
 		const ContextMenuRequest &request,
@@ -1453,6 +1484,7 @@ void AddMessageActions(
 		not_null<ListWidget*> list) {
 	AddPostLinkAction(menu, request);
 	AddMessageShotAction(menu, request, list);
+	AddJumpToBeginningAction(menu, request, list);
 	AddForwardAction(menu, request, list);
 	AddOfferAction(menu, request, list);
 	AddSendNowAction(menu, request, list);
