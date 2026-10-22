@@ -76,8 +76,41 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_dialogs.h"
 #include "styles/style_iv.h"
 
+#include "base/options.h"
+#include "core/launcher.h"
+
+#include <QtCore/QFile>
+
 namespace HistoryView {
 namespace {
+
+const char kOptionMessageFilters[] = "message-filters";
+
+base::options::toggle MessageFilters({
+	.id = kOptionMessageFilters,
+	.name = "Message filters",
+	.description = "Hide incoming text messages that contain any line from"
+		" the file \"message-filters.txt\" in the app's data folder (one"
+		" case-insensitive phrase per line). Restart the app after editing.",
+});
+
+[[nodiscard]] const QStringList &FilterPhrases() {
+	static const auto result = [] {
+		auto list = QStringList();
+		QFile file(cWorkingDir() + u"message-filters.txt"_q);
+		if (file.open(QIODevice::ReadOnly)) {
+			const auto lines = QString::fromUtf8(file.readAll()).split('\n');
+			for (const auto &line : lines) {
+				const auto phrase = line.trimmed().toLower();
+				if (!phrase.isEmpty()) {
+					list.push_back(phrase);
+				}
+			}
+		}
+		return list;
+	}();
+	return result;
+}
 
 [[nodiscard]] auto FlatSelectionEndpointFromState(const TextState &state)
 -> MessageSelectionFlatEndpoint {
@@ -1635,7 +1668,22 @@ bool Element::isHiddenByGroup() const {
 }
 
 bool Element::isHidden() const {
-	return isHiddenByGroup();
+	if (isHiddenByGroup()) {
+		return true;
+	} else if (!MessageFilters.value() || data()->out()) {
+		return false;
+	}
+	const auto &phrases = FilterPhrases();
+	if (phrases.isEmpty()) {
+		return false;
+	}
+	const auto text = data()->originalText().text.toLower();
+	for (const auto &phrase : phrases) {
+		if (text.contains(phrase)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 void Element::overrideMedia(std::unique_ptr<Media> media) {

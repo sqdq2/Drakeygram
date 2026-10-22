@@ -43,3 +43,8 @@ published apps; see README.md.
 * "Keep deleted messages" (data_session.cpp): text messages that other people
   delete stay on screen with a trash marker until the app restarts. Messages
   with media, service messages and your own messages are not kept. (untested)
+* "Hide All chats folder button" (window_filters_menu.cpp): hides the button
+  in the folders sidebar only; the top tab strip is unchanged. (untested)
+* "Message filters" (history_view_element.cpp): hides incoming text messages
+  containing a phrase listed in message-filters.txt in the app data folder.
+  Hidden messages still exist; this only changes display. (untested)

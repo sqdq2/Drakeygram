@@ -54,6 +54,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Window {
 namespace {
 
+const char kOptionHideAllChats[] = "hide-all-chats-folder";
+
+base::options::toggle HideAllChatsFolder({
+	.id = kOptionHideAllChats,
+	.name = "Hide \"All chats\" folder button",
+	.description = "Hide the \"All chats\" button in the folders sidebar."
+		" Restart the app after changing it.",
+});
+
 // The folder tabs container, exposed as a list to screen readers.
 class TabListLayout final : public Ui::VerticalLayout {
 public:
@@ -595,6 +604,9 @@ base::unique_qptr<Ui::SideBarButton> FiltersMenu::prepareButton(
 		? icon
 		: Ui::FilterIcon::All);
 	raw->setIconOverride(icons.normal, icons.active);
+	if (!id && HideAllChatsFolder.value()) {
+		raw->hide();
+	}
 	if (id >= 0) {
 		if (locked) {
 			// Surface a locked folder's premium-gated status and what pressing
