@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_service_message.h"
 
+#include "base/options.h"
+#include "base/unixtime.h"
+
 #include "history/view/media/history_view_media.h"
 #include "history/view/reactions/history_view_reactions.h"
 #include "history/view/history_view_cursor_state.h"
@@ -34,6 +37,14 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace HistoryView {
 namespace {
+
+const char kOptionServiceTime[] = "service-message-time";
+
+base::options::toggle ServiceMessageTime({
+	.id = kOptionServiceTime,
+	.name = "Service message time",
+	.description = "Show the time next to service messages.",
+});
 
 TextParseOptions EmptyLineOptions = {
 	TextParseMultiline, // flags
@@ -735,6 +746,17 @@ void Service::draw(Painter &p, const PaintContext &context) const {
 			.fullWidthSelection = false,
 			.selection = selection,
 		});
+		if (ServiceMessageTime.value()) {
+			const auto time = QLocale().toString(
+				base::unixtime::parse(data()->date()).time(),
+				QLocale::ShortFormat);
+			p.setPen(st->msgServiceFg());
+			p.drawTextLeft(
+				g.left() + g.width() + st::msgServicePadding.left(),
+				trect.top(),
+				width(),
+				time);
+		}
 	}
 	if (mediaDisplayed) {
 		const auto left = g.left() + (g.width() - media->width()) / 2;

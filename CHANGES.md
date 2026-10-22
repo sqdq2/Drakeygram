@@ -67,3 +67,5 @@ published apps; see README.md.
   messages from blocked users" (history_view_element.cpp). (untested)
 * "Plain replies and quotes" (history_view_reply.cpp): reply and quote blocks
   without the sender's profile color or pattern. (untested)
+* "Service message time" (history_view_service_message.cpp): time drawn to the
+  right of service messages. (untested)
