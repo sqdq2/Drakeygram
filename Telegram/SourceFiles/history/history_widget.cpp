@@ -223,6 +223,17 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace {
 
+const char kOptionConfirmSend[] = "confirm-before-sending";
+
+base::options::toggle ConfirmBeforeSending({
+	.id = kOptionConfirmSend,
+	.name = "Confirm before sending",
+	.description = "Ask for confirmation before a message is sent from the"
+		" message field.",
+});
+
+bool SendConfirmed = false;
+
 constexpr auto kMessagesPerPageFirst = 30;
 constexpr auto kMessagesPerPage = 50;
 constexpr auto kPreloadHeightsCount = 3; // when 3 screens to scroll left make a preload request
@@ -5823,6 +5834,21 @@ void HistoryWidget::send(Api::SendOptions options) {
 		return;
 	} else if (const auto page = shownRichMessage()) {
 		sendRichDraft(page, options);
+		return;
+	}
+	if (ConfirmBeforeSending.value()
+		&& !SendConfirmed
+		&& !_field->getTextWithAppliedMarkdown().text.isEmpty()) {
+		controller()->show(Ui::MakeConfirmBox({
+			.text = u"Send this message?"_q,
+			.confirmed = crl::guard(this, [=](Fn<void()> close) {
+				close();
+				SendConfirmed = true;
+				send(options);
+				SendConfirmed = false;
+			}),
+			.confirmText = u"Send"_q,
+		}));
 		return;
 	}
 	if (!options.scheduled) {

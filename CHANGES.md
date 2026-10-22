@@ -36,5 +36,7 @@ been compiled or run.
 * "Hide folder counters" (chat_filters_tabs_slider.cpp, window_filters_menu.cpp):
   no unread counters on folder tabs or the folders sidebar. Restart after
   changing. (untested)
+* "Confirm before sending" (history_widget.cpp) and "Hide similar channels
+  tab" (info_profile_tab_peer_lists.cpp). (untested)
 All of these are off by default and are not allowed by Telegram's API terms in
 published apps; see README.md.

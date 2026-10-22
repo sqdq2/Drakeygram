@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "info/profile/tabs/adapters/info_profile_tab_peer_lists.h"
 
 #include "data/components/recent_shared_media_gifts.h"
+#include "base/options.h"
 #include "data/data_channel.h"
 #include "data/data_document.h"
 #include "data/data_peer.h"
@@ -26,6 +27,14 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Info::Profile {
 namespace {
+
+const char kOptionHideSimilarTab[] = "hide-similar-tab";
+
+base::options::toggle HideSimilarTab({
+	.id = kOptionHideSimilarTab,
+	.name = "Hide similar channels tab",
+	.description = "Do not show the similar channels tab in profiles.",
+});
 
 class WidgetTabAdapter final : public MediaTabContent {
 public:
@@ -104,7 +113,9 @@ MediaTabDescriptor MakeSimilarPeersTabDescriptor(
 	return {
 		.id = u"similar"_q,
 		.title = tr::lng_media_type_similar(tr::marked),
-		.shown = SimilarPeersCountValue(peer) | rpl::map(_1 > 0),
+		.shown = SimilarPeersCountValue(peer) | rpl::map([](int count) {
+			return count > 0 && !HideSimilarTab.value();
+		}),
 		.factory = [=](MediaTabContext context) {
 			auto content = SimilarPeers::MakeSimilarPeersInner(
 				context.parent,
