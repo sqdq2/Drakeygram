@@ -10,6 +10,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_updates.h"
 #include "core/application.h"
 #include "core/click_handler_types.h"
+#include "core/core_screenshot_protection.h"
+#include "base/options.h"
 #include "export/export_manager.h"
 #include "ui/platform/ui_platform_window.h"
 #include "platform/platform_window_title.h"
@@ -43,6 +45,16 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Window {
 namespace {
+
+const char kOptionStreamerMode[] = "streamer-mode";
+
+base::options::toggle StreamerMode({
+	.id = kOptionStreamerMode,
+	.name = "Streamer mode",
+	.description = "Hide the app windows from screenshots and screen"
+		" recording where the system supports it. Restart the app after"
+		" changing it.",
+});
 
 class Show final : public Ui::Show {
 public:
@@ -115,6 +127,12 @@ Controller::Controller(CreateArgs &&args)
 , _widget(this)
 , _adaptive(std::make_unique<Adaptive>()) {
 	_widget.init();
+	if (StreamerMode.value()) {
+		Core::App().screenshotProtection().addContentReason(
+			_widget.widget(),
+			rpl::single(true),
+			_lifetime);
+	}
 }
 
 Controller::~Controller() {

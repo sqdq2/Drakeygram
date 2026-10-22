@@ -17,6 +17,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "base/event_filter.h"
 #include "base/options.h"
+#include "ui/widgets/chat_filters_tabs_slider.h"
 #include "core/application.h"
 #include "core/core_settings.h"
 #include "core/ui_integration.h"
@@ -613,8 +614,9 @@ base::unique_qptr<Ui::SideBarButton> FiltersMenu::prepareButton(
 			const auto chats = state.chats;
 			const auto chatsMuted = state.chatsMuted;
 			const auto muted = (chatsMuted + state.marksMuted);
-			const auto count = (chats + state.marks)
-				- (includeMuted ? 0 : muted);
+			const auto count = Ui::HideFolderCounters()
+				? 0
+				: ((chats + state.marks) - (includeMuted ? 0 : muted));
 			const auto string = !count
 				? QString()
 				: (count > 999)

@@ -28,5 +28,13 @@ been compiled or run.
 * "Stay offline" (api_updates.cpp): never reports the account as online. (untested)
 * "Don't mark stories as viewed" (data_stories.cpp). (untested)
 * "Hide sponsored messages" (sponsored_messages.cpp). (untested)
+* "No notification delay" (notifications_manager.cpp): notifications show
+  without the extra wait. (untested)
+* "Streamer mode" (window_controller.cpp): hides app windows from screenshots
+  and screen recording, using the existing screenshot-protection service.
+  Restart after changing. (untested)
+* "Hide folder counters" (chat_filters_tabs_slider.cpp, window_filters_menu.cpp):
+  no unread counters on folder tabs or the folders sidebar. Restart after
+  changing. (untested)
 All of these are off by default and are not allowed by Telegram's API terms in
 published apps; see README.md.

@@ -180,6 +180,16 @@ base::options::toggle HideReplyButtonOption({
 		&& peer->isNotificationsUser();
 }
 
+const char kOptionNoNotifyDelay[] = "no-notify-delay";
+
+base::options::toggle NoNotifyDelay({
+	.id = kOptionNoNotifyDelay,
+	.name = "No notification delay",
+	.description = "Show notifications right away, without the short wait"
+		" that is normally used when you are active in another app of"
+		" yours.",
+});
+
 } // namespace
 
 const char kOptionCustomNotification[] = "custom-notification";
@@ -404,6 +414,9 @@ System::Timing System::countTiming(
 		delay = config.notifyCloudDelay;
 	} else if (cOtherOnline() >= t) {
 		delay = config.notifyDefaultDelay;
+	}
+	if (NoNotifyDelay.value()) {
+		delay = minimalDelay;
 	}
 	return {
 		.delay = delay,

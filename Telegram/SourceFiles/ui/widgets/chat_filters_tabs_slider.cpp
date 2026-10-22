@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/widgets/chat_filters_tabs_slider.h"
 
 #include "ui/effects/ripple_animation.h"
+#include "base/options.h"
 #include "ui/widgets/side_bar_button.h"
 #include "styles/style_dialogs.h"
 #include "styles/style_widgets.h"
@@ -15,6 +16,22 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QScrollBar>
 
 namespace Ui {
+namespace {
+
+const char kOptionHideFolderCounters[] = "hide-folder-counters";
+
+base::options::toggle HideFolderCountersOption({
+	.id = kOptionHideFolderCounters,
+	.name = "Hide folder counters",
+	.description = "Do not show unread counters on chat folders. Restart the"
+		" app after changing it.",
+});
+
+} // namespace
+
+bool HideFolderCounters() {
+	return HideFolderCountersOption.value();
+}
 
 ChatsFiltersTabs::ChatsFiltersTabs(
 	not_null<Ui::RpWidget*> parent,
@@ -157,6 +174,9 @@ void ChatsFiltersTabs::fitWidthToSections() {
 }
 
 void ChatsFiltersTabs::setUnreadCount(int index, int unreadCount, bool mute) {
+	if (HideFolderCounters()) {
+		unreadCount = 0;
+	}
 	const auto it = _unreadCounts.find(index);
 	if (it == _unreadCounts.end()) {
 		if (unreadCount) {
