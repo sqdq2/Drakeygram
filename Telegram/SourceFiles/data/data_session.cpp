@@ -72,6 +72,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "dialogs/dialogs_entry.h"
 #include "dialogs/dialogs_row.h"
 #include "base/options.h"
+#include "core/launcher.h"
+
+#include <QtCore/QFile>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QDateTime>
 #include "data/data_send_action.h"
 #include "data/data_message_reactions.h"
 #include "data/data_emoji_statuses.h"
@@ -108,6 +114,21 @@ base::options::toggle KeepDeletedMessages({
 		" for messages already loaded; it is not saved after restart."
 		" Self-destructing and view-once media is never kept.",
 });
+
+void LogKeptDeleted(not_null<HistoryItem*> item) {
+	auto file = QFile(cWorkingDir() + u"deleted-messages.jsonl"_q);
+	if (!file.open(QIODevice::Append)) {
+		return;
+	}
+	auto object = QJsonObject();
+	object.insert(u"date"_q, QDateTime::fromSecsSinceEpoch(item->date()).toString(Qt::ISODate));
+	object.insert(u"chat"_q, item->history()->peer->name());
+	object.insert(u"chat_id"_q, QString::number(item->history()->peer->id.value));
+	object.insert(u"from"_q, item->from()->name());
+	object.insert(u"text"_q, item->originalText().text);
+	file.write(QJsonDocument(object).toJson(QJsonDocument::Compact));
+	file.write("\n");
+}
 
 constexpr auto kNextForUpgradeGiftTimeout = 5 * crl::time(1000);
 constexpr auto kMaxServiceNotificationMessageSize = 4096;
@@ -3380,6 +3401,7 @@ void Session::processMessagesDeleted(
 				&& !item->isScheduled()) {
 				const auto mark = QString::fromUtf8("\xF0\x9F\x97\x91 ");
 				if (!item->originalText().text.startsWith(mark)) {
+					LogKeptDeleted(item);
 					auto text = TextWithEntities{ mark };
 					text.append(TextWithEntities(item->originalText()));
 					item->setText(std::move(text));
