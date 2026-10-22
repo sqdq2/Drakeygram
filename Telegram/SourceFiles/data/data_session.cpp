@@ -98,6 +98,17 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Data {
 namespace {
 
+const char kOptionKeepDeleted[] = "keep-deleted-messages";
+
+base::options::toggle KeepDeletedMessages({
+	.id = kOptionKeepDeleted,
+	.name = "Keep deleted messages",
+	.description = "When someone else deletes an ordinary message, keep it"
+		" on screen on this device and mark it with a trash icon. Only works"
+		" for messages already loaded; it is not saved after restart."
+		" Self-destructing and view-once media is never kept.",
+});
+
 constexpr auto kNextForUpgradeGiftTimeout = 5 * crl::time(1000);
 constexpr auto kMaxServiceNotificationMessageSize = 4096;
 
@@ -3361,6 +3372,21 @@ void Session::processMessagesDeleted(
 	for (const auto &messageId : data) {
 		const auto i = list ? list->find(messageId.v) : Messages::iterator();
 		if (list && i != list->end()) {
+			const auto item = i->second;
+			if (KeepDeletedMessages.value()
+				&& !item->isService()
+				&& !item->out()
+				&& !item->media()
+				&& !item->isScheduled()) {
+				const auto mark = QString::fromUtf8("\xF0\x9F\x97\x91 ");
+				if (!item->originalText().text.startsWith(mark)) {
+					auto text = TextWithEntities{ mark };
+					text.append(TextWithEntities(item->originalText()));
+					item->setText(std::move(text));
+					item->history()->owner().requestItemViewRefresh(item);
+				}
+				continue;
+			}
 			const auto history = i->second->history();
 			toDestroy.push_back(i->second);
 			historiesToCheck.emplace(history);

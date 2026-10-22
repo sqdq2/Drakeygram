@@ -40,3 +40,6 @@ been compiled or run.
   tab" (info_profile_tab_peer_lists.cpp). (untested)
 All of these are off by default and are not allowed by Telegram's API terms in
 published apps; see README.md.
+* "Keep deleted messages" (data_session.cpp): text messages that other people
+  delete stay on screen with a trash marker until the app restarts. Messages
+  with media, service messages and your own messages are not kept. (untested)
