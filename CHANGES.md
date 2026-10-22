@@ -54,3 +54,9 @@ published apps; see README.md.
 * Streamer mode now also covers the app's own popup notifications
   (notifications_manager_default.cpp); system-native notifications cannot be
   hidden this way. (untested)
+* "Custom app icon" (window/main_window.cpp): app-icon.png from the app data
+  folder as window/tray icon. Restart after changing. (untested)
+* "Message Shot" (history_view_context_menu.cpp): "Save message as image" for a
+  single message, reusing the photo editor's message renderer; messages that
+  forbid saving are skipped, media that is not loaded yet may not render.
+  (untested)

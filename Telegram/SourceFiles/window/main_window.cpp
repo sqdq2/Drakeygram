@@ -6,6 +6,7 @@ For license and copyright information please follow this link:
 https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "window/main_window.h"
+#include "core/launcher.h"
 
 #include "api/api_updates.h"
 #include "storage/localstorage.h"
@@ -87,6 +88,14 @@ using Core::WindowPosition;
 	static auto result = QImage();
 	return result;
 }
+
+base::options::toggle CustomAppIcon({
+	.id = "custom-app-icon",
+	.name = "Custom app icon",
+	.description = "Use the picture \"app-icon.png\" from the app's data"
+		" folder as the window and tray icon. Restart the app after changing"
+		" it.",
+});
 
 base::options::toggle OptionNewWindowsSizeAsFirst({
 	.id = kOptionNewWindowsSizeAsFirst,
@@ -215,7 +224,16 @@ QIcon CreateSupportIcon(Main::Session *session) {
 
 QIcon CreateIcon(Main::Session *session, bool returnNullIfDefault) {
 	const auto supportIcon = CreateSupportIcon(session);
-	if (!supportIcon.isNull() || returnNullIfDefault) {
+	if (!supportIcon.isNull()) {
+		return supportIcon;
+	}
+	if (CustomAppIcon.value()) {
+		const auto image = QImage(cWorkingDir() + u"app-icon.png"_q);
+		if (!image.isNull()) {
+			return QIcon(Ui::PixmapFromImage(base::duplicate(image)));
+		}
+	}
+	if (returnNullIfDefault) {
 		return supportIcon;
 	}
 

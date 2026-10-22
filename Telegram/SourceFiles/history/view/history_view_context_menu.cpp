@@ -7,6 +7,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_context_menu.h"
 
+#include "base/options.h"
+#include "editor/editor_message_render.h"
+#include "editor/editor_message_source.h"
+
 #include "api/api_attached_stickers.h"
 #include "api/api_editing.h"
 #include "api/api_global_privacy.h"
@@ -123,6 +127,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace HistoryView {
 namespace {
+
+const char kOptionMessageShot[] = "message-shot";
+
+base::options::toggle MessageShot({
+	.id = kOptionMessageShot,
+	.name = "Message Shot",
+	.description = "Add \"Save message as image\" to the context menu of"
+		" a message. Messages that forbid saving content are skipped.",
+});
 
 constexpr auto kRescheduleLimit = 20;
 constexpr auto kTagNameLimit = 12;
@@ -1398,11 +1411,48 @@ void AddTopMessageActions(
 	AddViewStatisticsAction(menu, request, list);
 }
 
+void AddMessageShotAction(
+		not_null<Ui::PopupMenu*> menu,
+		const ContextMenuRequest &request,
+		not_null<ListWidget*> list) {
+	const auto item = request.item;
+	if (!MessageShot.value()
+		|| !item
+		|| !request.selectedItems.empty()
+		|| !item->isRegular()
+		|| item->isService()
+		|| Editor::MessageForbidsRender(item)
+		|| !Editor::CanRenderMessage(item)) {
+		return;
+	}
+	const auto controller = list->controller();
+	menu->addAction(u"Save message as image"_q, crl::guard(controller, [=] {
+		auto source = std::make_shared<Editor::MessageSource>(item);
+		auto renderer = Editor::MessageRenderer(std::move(source));
+		auto image = renderer.render(2);
+		if (image.isNull()) {
+			controller->showToast(u"The message is not ready to render."_q);
+			return;
+		}
+		FileDialog::GetWritePath(
+			Core::App().getFileDialogParent(),
+			u"Save message as image"_q,
+			u"PNG Image (*.png);;"_q + FileDialog::AllFilesFilter(),
+			filedialogDefaultName(u"message"_q, u".png"_q),
+			crl::guard(controller, [image](const QString &result) {
+				if (!result.isEmpty()) {
+					image.save(result, "PNG");
+				}
+			}));
+	}), &st::menuIconPhoto);
+}
+
 void AddMessageActions(
 		not_null<Ui::PopupMenu*> menu,
 		const ContextMenuRequest &request,
 		not_null<ListWidget*> list) {
 	AddPostLinkAction(menu, request);
+	AddMessageShotAction(menu, request, list);
 	AddForwardAction(menu, request, list);
 	AddOfferAction(menu, request, list);
 	AddSendNowAction(menu, request, list);
