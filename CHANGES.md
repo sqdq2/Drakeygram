@@ -65,3 +65,5 @@ published apps; see README.md.
   history survives restarts as a file. (untested)
 * "Jump to beginning" (context menu, history_view_context_menu.cpp) and "Hide
   messages from blocked users" (history_view_element.cpp). (untested)
+* "Plain replies and quotes" (history_view_reply.cpp): reply and quote blocks
+  without the sender's profile color or pattern. (untested)
