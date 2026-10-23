@@ -80,3 +80,11 @@ published apps; see README.md.
   and may be wrong. (untested)
 * "Hide silent-send button" (history_view_compose_controls.cpp): removes the
   bell button next to the message field. (untested)
+
+## AyuGram-style feature coverage notes
+Already in upstream Telegram Desktop (nothing added): channel badge, voice
+message seeking, wide messages (unlimited message width), peer ids, 100 recent
+stickers, mark-all-read buttons.
+Not implemented: GIF controls, round-video seeking, material-style switches
+(these live in lib_ui, which is a pinned submodule), macOS Taptic Engine and
+force-click media preview, hiding "All chats" in the top tab strip.
