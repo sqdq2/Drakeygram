@@ -91,6 +91,8 @@ using Core::WindowPosition;
 }
 
 const char kOptionCustomAppIcon[] = "custom-app-icon";
+const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
+const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
 } // namespace
 
@@ -152,9 +154,6 @@ base::options::toggle OptionDisableTouchbar({
 }
 
 } // namespace
-
-const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
-const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
 const QImage &Logo() {
 	static const auto result = QImage(u":/gui/art/logo_256.png"_q);

@@ -115,13 +115,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <ksandbox.h>
 
 namespace Core {
-namespace {
-
-} // namespace
 
 const char kOptionMonoFont[] = "custom-mono-font";
-
-} // namespace
 
 base::options::toggle CustomMonoFont({
 	.id = kOptionMonoFont,
@@ -130,9 +125,6 @@ base::options::toggle CustomMonoFont({
 		" app's data folder for code and monospaced text. Restart the app"
 		" after changing it.",
 });
-
-namespace {
-} // namespace
 
 void ApplyCustomMonoFont() {
 	if (!CustomMonoFont.value()) {
@@ -164,6 +156,8 @@ void ApplyCustomMonoFont() {
 constexpr auto kQuitPreventTimeoutMs = crl::time(1500);
 constexpr auto kAutoLockTimeoutLateMs = crl::time(3000);
 constexpr auto kClearEmojiImageSourceTimeout = 10 * crl::time(1000);
+
+namespace {
 
 LaunchState GlobalLaunchState/* = LaunchState::Running*/;
 
