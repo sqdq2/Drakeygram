@@ -69,3 +69,5 @@ published apps; see README.md.
   without the sender's profile color or pattern. (untested)
 * "Service message time" (history_view_service_message.cpp): time drawn to the
   right of service messages. (untested)
+* "Rounded stickers" (history_view_sticker.cpp): clips message stickers with
+  rounded corners. (untested)

@@ -41,6 +41,14 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
+const char kOptionRoundedStickers[] = "rounded-stickers";
+
+base::options::toggle RoundedStickers({
+	.id = kOptionRoundedStickers,
+	.name = "Rounded stickers",
+	.description = "Clip stickers in chats to rounded corners.",
+});
+
 constexpr auto kMaxSizeFixed = 512;
 constexpr auto kMaxEmojiSizeFixed = 256;
 constexpr auto kPremiumMultiplier = (1 + 0.245 * 2);
@@ -244,12 +252,23 @@ void Sticker::draw(
 	}
 
 	ensureDataMediaCreated();
+	const auto rounded = RoundedStickers.value() && !customEmojiPart();
+	if (rounded) {
+		auto path = QPainterPath();
+		const auto radius = std::min(r.width(), r.height()) / 6.;
+		path.addRoundedRect(QRectF(r), radius, radius);
+		p.save();
+		p.setClipPath(path, Qt::IntersectClip);
+	}
 	if (readyToDrawAnimationFrame()) {
 		paintAnimationFrame(p, context, r);
 	} else if (!_data->sticker()
 		|| (_data->sticker()->isLottie() && _replacements)
 		|| !paintPixmap(p, context, r)) {
 		paintPath(p, context, r);
+	}
+	if (rounded) {
+		p.restore();
 	}
 	if (_sensitiveBlurred) {
 		paintSensitiveTag(p, context, r);
