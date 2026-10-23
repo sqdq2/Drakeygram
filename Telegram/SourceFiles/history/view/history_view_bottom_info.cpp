@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_bottom_info.h"
 
+#include "base/options.h"
+
 #include "ui/chat/message_bubble.h"
 #include "ui/chat/chat_style.h"
 #include "ui/effects/reaction_fly_animation.h"
@@ -38,6 +40,25 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace HistoryView {
 namespace {
+
+const char kOptionTimeSeconds[] = "message-time-seconds";
+
+base::options::toggle MessageTimeSeconds({
+	.id = kOptionTimeSeconds,
+	.name = "Seconds in message time",
+	.description = "Show seconds in the time of each message.",
+});
+
+[[nodiscard]] QString FormatMessageTime(const QTime &time) {
+	if (!MessageTimeSeconds.value()) {
+		return QLocale().toString(time, QLocale::ShortFormat);
+	}
+	auto format = QLocale().timeFormat(QLocale::ShortFormat);
+	if (!format.contains(u"ss"_q)) {
+		format.replace(u"mm"_q, u"mm:ss"_q);
+	}
+	return QLocale().toString(time, format);
+}
 
 [[nodiscard]] QString SchedulePeriodText(TimeId period) {
 	struct Entry {
@@ -505,7 +526,7 @@ void BottomInfo::layoutDateText() {
 		: edited + ((_data.flags
 			& (Data::Flag::ForwardedDate | Data::Flag::FullDate))
 		? Ui::FormatDateTimeSavedFrom(_data.date)
-		: QLocale().toString(_data.date.time(), QLocale::ShortFormat));
+		: FormatMessageTime(_data.date.time()));
 	const auto afterAuthor = prefix + date;
 	const auto afterAuthorWidth = st::msgDateFont->width(afterAuthor);
 	const auto authorWidth = st::msgDateFont->width(author);

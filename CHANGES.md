@@ -71,3 +71,6 @@ published apps; see README.md.
   right of service messages. (untested)
 * "Rounded stickers" (history_view_sticker.cpp): clips message stickers with
   rounded corners. (untested)
+* "Seconds in message time" (history_view_bottom_info.cpp). Upstream already
+  has "unlimited message width" (wide messages), peer IDs, 100 recent stickers
+  and mark-all-read as experimental options. (untested)
