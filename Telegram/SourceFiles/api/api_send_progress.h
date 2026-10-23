@@ -18,6 +18,8 @@ class Session;
 
 namespace Api {
 
+extern const char kOptionNoTypingStatus[];
+
 enum class SendProgressType {
 	Typing,
 	RecordVideo,

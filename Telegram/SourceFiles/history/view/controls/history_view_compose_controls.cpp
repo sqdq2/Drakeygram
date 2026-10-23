@@ -37,6 +37,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "chat_helpers/field_autocomplete.h"
 #include "core/application.h"
 #include "core/click_handler_types.h"
+#include "core/launcher.h"
 #include "core/core_settings.h"
 #include "core/shortcuts.h"
 #include "core/ui_integration.h"
@@ -144,15 +145,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
-const char kOptionHideSilentToggle[] = "hide-silent-toggle";
-
-base::options::toggle HideSilentToggle({
-	.id = kOptionHideSilentToggle,
-	.name = "Hide silent-send button",
-	.description = "Remove the bell button next to the message field in"
-		" channels. Restart the app after changing it.",
-});
-
 constexpr auto kSaveDraftTimeout = crl::time(1000);
 constexpr auto kSaveDraftAnywayTimeout = 5 * crl::time(1000);
 constexpr auto kSaveCloudDraftIdleTimeout = 14 * crl::time(1000);
@@ -198,7 +190,18 @@ using ForwardPanel = Controls::ForwardPanel;
 } // namespace
 
 namespace Controls {
+
 const char kOptionMacCmdReplyImmediately[] = "mac-cmd-reply-immediately";
+
+const char kOptionHideSilentToggle[] = "hide-silent-toggle";
+
+base::options::toggle HideSilentToggle({
+	.id = kOptionHideSilentToggle,
+	.name = "Hide silent-send button",
+	.description = "Remove the bell button next to the message field in"
+		" channels. Restart the app after changing it.",
+});
+
 } // namespace Controls
 
 const ChatHelpers::PauseReason kDefaultPanelsLevel

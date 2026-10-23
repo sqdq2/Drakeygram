@@ -26,6 +26,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "ui/chat/sponsored_message_bar.h"
 #include "ui/text/text_utilities.h" // tr::rich.
+#include "core/launcher.h"
 
 namespace Data {
 namespace {
@@ -34,6 +35,8 @@ constexpr auto kMs = crl::time(1000);
 constexpr auto kRequestTimeLimit = 5 * 60 * crl::time(1000);
 
 const auto kFlaggedPreload = ((MediaPreload*)quintptr(0x01));
+
+} // namespace
 
 const char kOptionHideSponsored[] = "hide-sponsored-messages";
 

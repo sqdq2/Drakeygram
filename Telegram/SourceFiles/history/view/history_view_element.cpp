@@ -84,6 +84,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
+} // namespace
+
 const char kOptionHideBlocked[] = "hide-blocked-messages";
 
 base::options::toggle HideBlockedMessages({
@@ -94,6 +96,15 @@ base::options::toggle HideBlockedMessages({
 });
 
 const char kOptionMessageFilters[] = "message-filters";
+
+namespace ContextMenu {
+
+const char kOptionJumpToBeginning[] = "jump-to-beginning";
+const char kOptionMessageDetails[] = "message-details";
+const char kOptionCopyCallback[] = "copy-button-callback";
+const char kOptionMessageShot[] = "message-shot";
+
+} // namespace ContextMenu
 
 base::options::toggle MessageFilters({
 	.id = kOptionMessageFilters,

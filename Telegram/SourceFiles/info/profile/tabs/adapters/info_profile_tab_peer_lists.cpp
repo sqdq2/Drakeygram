@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "data/components/recent_shared_media_gifts.h"
 #include "base/options.h"
+#include "core/launcher.h"
 #include "data/data_channel.h"
 #include "data/data_document.h"
 #include "data/data_peer.h"
@@ -26,7 +27,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/rp_widget.h"
 
 namespace Info::Profile {
-namespace {
 
 const char kOptionHideSimilarTab[] = "hide-similar-tab";
 
@@ -35,6 +35,8 @@ base::options::toggle HideSimilarTab({
 	.name = "Hide similar channels tab",
 	.description = "Do not show the similar channels tab in profiles.",
 });
+
+namespace {
 
 class WidgetTabAdapter final : public MediaTabContent {
 public:

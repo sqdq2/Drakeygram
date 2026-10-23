@@ -176,7 +176,18 @@ struct BottomRippleMask {
 	int shift = 0;
 };
 
+namespace ContextMenu {
+extern const char kOptionJumpToBeginning[];
+extern const char kOptionMessageDetails[];
+extern const char kOptionCopyCallback[];
+extern const char kOptionMessageShot[];
+} // namespace ContextMenu
+
 extern const char kOptionUnlimitedMessageWidth[];
+extern const char kOptionTimeSeconds[];
+extern const char kOptionPlainReplies[];
+extern const char kOptionServiceTime[];
+extern const char kOptionRoundedStickers[];
 
 class Message final : public Element {
 public:

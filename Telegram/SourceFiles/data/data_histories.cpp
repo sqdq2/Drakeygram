@@ -33,6 +33,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/history_item_helpers.h"
 #include "history/view/history_view_element.h"
 #include "core/application.h"
+#include "core/launcher.h"
 #include "apiwrap.h"
 
 namespace Data {
@@ -40,6 +41,8 @@ namespace {
 
 constexpr auto kReadRequestTimeout = 3 * crl::time(1000);
 constexpr auto kReportDeliveriesPerRequest = 50;
+
+} // namespace
 
 const char kOptionNoReadReceipts[] = "no-read-receipts";
 

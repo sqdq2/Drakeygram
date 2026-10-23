@@ -39,6 +39,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_reactions_notify_settings.h"
 #include "api/api_updates.h"
 #include "apiwrap.h"
+#include "core/launcher.h"
 #include "main/main_account.h"
 #include "main/main_domain.h"
 #include "main/main_session.h"
@@ -182,6 +183,8 @@ base::options::toggle HideReplyButtonOption({
 
 const char kOptionNoNotifyDelay[] = "no-notify-delay";
 
+} // namespace
+
 base::options::toggle NoNotifyDelay({
 	.id = kOptionNoNotifyDelay,
 	.name = "No notification delay",
@@ -190,6 +193,7 @@ base::options::toggle NoNotifyDelay({
 		" yours.",
 });
 
+namespace {
 } // namespace
 
 const char kOptionCustomNotification[] = "custom-notification";

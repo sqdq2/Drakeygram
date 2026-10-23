@@ -77,9 +77,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/boxes/confirm_box.h"
 #include "apiwrap.h"
 #include "ui/text/format_values.h" // Ui::FormatPhone
+#include "core/launcher.h"
 
 namespace Api {
 namespace {
+
+} // namespace
 
 const char kOptionStayOffline[] = "stay-offline";
 

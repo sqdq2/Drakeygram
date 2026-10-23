@@ -35,6 +35,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "main/main_session_settings.h"
 #include "base/options.h"
+#include "core/launcher.h"
 #include "base/crc32hash.h"
 #include "ui/boxes/confirm_box.h"
 #include "ui/toast/toast.h"
@@ -89,13 +90,22 @@ using Core::WindowPosition;
 	return result;
 }
 
+const char kOptionCustomAppIcon[] = "custom-app-icon";
+const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
+const char kOptionDisableTouchbar[] = "touchbar-disabled";
+
+} // namespace
+
+
 base::options::toggle CustomAppIcon({
-	.id = "custom-app-icon",
+	.id = kOptionCustomAppIcon,
 	.name = "Custom app icon",
 	.description = "Use the picture \"app-icon.png\" from the app's data"
 		" folder as the window and tray icon. Restart the app after changing"
 		" it.",
 });
+
+namespace {
 
 base::options::toggle OptionNewWindowsSizeAsFirst({
 	.id = kOptionNewWindowsSizeAsFirst,
@@ -144,9 +154,6 @@ base::options::toggle OptionDisableTouchbar({
 }
 
 } // namespace
-
-const char kOptionNewWindowsSizeAsFirst[] = "new-windows-size-as-first";
-const char kOptionDisableTouchbar[] = "touchbar-disabled";
 
 const QImage &Logo() {
 	static const auto result = QImage(u":/gui/art/logo_256.png"_q);

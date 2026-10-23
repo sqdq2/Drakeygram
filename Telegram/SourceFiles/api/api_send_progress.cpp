@@ -15,6 +15,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/unixtime.h"
 #include "data/data_peer_values.h"
 #include "apiwrap.h"
+#include "core/launcher.h"
 
 namespace Api {
 namespace {
@@ -23,6 +24,8 @@ constexpr auto kCancelTypingActionTimeout = crl::time(5000);
 constexpr auto kSendMySpeakingInterval = 3 * crl::time(1000);
 constexpr auto kSendMyTypingInterval = 5 * crl::time(1000);
 constexpr auto kSendTypingsToOfflineFor = TimeId(30);
+
+} // namespace
 
 const char kOptionNoTypingStatus[] = "no-typing-status";
 

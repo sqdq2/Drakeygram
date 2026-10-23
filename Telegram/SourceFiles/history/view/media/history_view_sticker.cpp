@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/media/history_view_sticker.h"
 
 #include "base/options.h"
+#include "core/launcher.h"
 #include "boxes/sticker_set_box.h"
 #include "history/history.h"
 #include "history/history_item_components.h"
@@ -41,6 +42,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
+} // namespace
+
+namespace Media {
+
+extern const char kOptionRoundedStickers[];
+
 const char kOptionRoundedStickers[] = "rounded-stickers";
 
 base::options::toggle RoundedStickers({
@@ -48,6 +55,8 @@ base::options::toggle RoundedStickers({
 	.name = "Rounded stickers",
 	.description = "Clip stickers in chats to rounded corners.",
 });
+
+} // namespace Media
 
 constexpr auto kMaxSizeFixed = 512;
 constexpr auto kMaxEmojiSizeFixed = 256;

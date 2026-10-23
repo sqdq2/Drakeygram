@@ -14,6 +14,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_story.h"
 
 namespace Data {
+
+extern const char kOptionNoStoryViews[];
+
 class GroupCall;
 } // namespace Data
 

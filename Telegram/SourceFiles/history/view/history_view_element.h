@@ -50,6 +50,16 @@ struct ButtonParameters;
 class InlineList;
 } // namespace HistoryView::Reactions
 
+extern const char kOptionHideBlocked[];
+extern const char kOptionMessageFilters[];
+
+namespace HistoryView::ContextMenu {
+extern const char kOptionJumpToBeginning[];
+extern const char kOptionMessageDetails[];
+extern const char kOptionCopyCallback[];
+extern const char kOptionMessageShot[];
+} // namespace HistoryView::ContextMenu
+
 namespace HistoryView::ReplyButton {
 struct ButtonParameters;
 } // namespace HistoryView::ReplyButton

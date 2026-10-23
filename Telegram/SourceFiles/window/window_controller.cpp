@@ -12,6 +12,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "core/click_handler_types.h"
 #include "core/core_screenshot_protection.h"
 #include "base/options.h"
+#include "core/launcher.h"
 #include "export/export_manager.h"
 #include "ui/platform/ui_platform_window.h"
 #include "platform/platform_window_title.h"
@@ -46,6 +47,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Window {
 namespace {
 
+} // namespace
+
 const char kOptionStreamerMode[] = "streamer-mode";
 
 base::options::toggle StreamerMode({
@@ -55,6 +58,8 @@ base::options::toggle StreamerMode({
 		" recording where the system supports it. Restart the app after"
 		" changing it.",
 });
+
+namespace {
 
 class Show final : public Ui::Show {
 public:

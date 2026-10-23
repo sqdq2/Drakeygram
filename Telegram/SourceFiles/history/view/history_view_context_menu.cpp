@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_context_menu.h"
 
 #include "base/options.h"
+#include "core/launcher.h"
 #include "editor/editor_message_render.h"
 #include "editor/editor_message_source.h"
 
@@ -128,7 +129,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
-const char kOptionJumpToBeginning[] = "jump-to-beginning";
+} // namespace
+
+namespace ContextMenu {
+
+extern const char kOptionJumpToBeginning[];
 
 base::options::toggle JumpToBeginning({
 	.id = kOptionJumpToBeginning,
@@ -137,7 +142,7 @@ base::options::toggle JumpToBeginning({
 		" message, which opens the oldest part of the chat.",
 });
 
-const char kOptionMessageDetails[] = "message-details";
+extern const char kOptionMessageDetails[];
 
 base::options::toggle MessageDetails({
 	.id = kOptionMessageDetails,
@@ -146,7 +151,7 @@ base::options::toggle MessageDetails({
 		" date and, for stickers, the pack id and a best-guess author id.",
 });
 
-const char kOptionCopyCallback[] = "copy-button-callback";
+extern const char kOptionCopyCallback[];
 
 base::options::toggle CopyButtonCallback({
 	.id = kOptionCopyCallback,
@@ -155,7 +160,7 @@ base::options::toggle CopyButtonCallback({
 		" right-click an inline callback button.",
 });
 
-const char kOptionMessageShot[] = "message-shot";
+extern const char kOptionMessageShot[];
 
 base::options::toggle MessageShot({
 	.id = kOptionMessageShot,
@@ -163,6 +168,8 @@ base::options::toggle MessageShot({
 	.description = "Add \"Save message as image\" to the context menu of"
 		" a message. Messages that forbid saving content are skipped.",
 });
+
+} // namespace ContextMenu
 
 constexpr auto kRescheduleLimit = 20;
 constexpr auto kTagNameLimit = 12;

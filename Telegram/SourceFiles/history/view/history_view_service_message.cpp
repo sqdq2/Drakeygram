@@ -8,10 +8,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_service_message.h"
 
 #include "base/options.h"
+#include "core/launcher.h"
 #include "base/unixtime.h"
 
 #include "history/view/media/history_view_media.h"
 #include "history/view/reactions/history_view_reactions.h"
+#include "history/view/history_view_message.h"
 #include "history/view/history_view_cursor_state.h"
 #include "history/history.h"
 #include "history/history_item.h"
@@ -37,6 +39,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace HistoryView {
 namespace {
+
+} // namespace
+
+extern const char kOptionServiceTime[];
 
 const char kOptionServiceTime[] = "service-message-time";
 

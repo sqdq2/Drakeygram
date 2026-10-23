@@ -115,7 +115,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <ksandbox.h>
 
 namespace Core {
-namespace {
 
 const char kOptionMonoFont[] = "custom-mono-font";
 
@@ -157,6 +156,8 @@ void ApplyCustomMonoFont() {
 constexpr auto kQuitPreventTimeoutMs = crl::time(1500);
 constexpr auto kAutoLockTimeoutLateMs = crl::time(3000);
 constexpr auto kClearEmojiImageSourceTimeout = 10 * crl::time(1000);
+
+namespace {
 
 LaunchState GlobalLaunchState/* = LaunchState::Running*/;
 

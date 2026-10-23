@@ -44,6 +44,7 @@ class LayerStackWidget;
 class MediaPreviewWidget;
 
 extern const char kOptionAutoScrollInactiveChat[];
+extern const char kOptionConfirmSend[];
 
 class MainWindow : public Platform::MainWindow {
 public:

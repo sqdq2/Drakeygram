@@ -46,6 +46,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/options.h"
 #include "base/unixtime.h"
 #include "core/application.h"
+#include "core/launcher.h"
 #include "core/click_handler_types.h" // ClickHandlerContext.
 #include "settings/settings_credits_graphics.h"
 #include "storage/storage_account.h"
@@ -61,6 +62,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_layers.h"
 
 namespace {
+
+} // namespace
 
 const char kOptionHideSimilarChannels[] = "hide-similar-channels";
 
