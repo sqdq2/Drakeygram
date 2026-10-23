@@ -79,6 +79,7 @@ struct custom_is_fast_copy_type<Window::Notifications::ChangeType> : std::true_t
 
 namespace Window::Notifications {
 
+extern const char kOptionNoNotifyDelay[];
 extern const char kOptionCustomNotification[];
 extern const char kOptionGNotification[];
 extern const char kOptionMacModernNotifications[];

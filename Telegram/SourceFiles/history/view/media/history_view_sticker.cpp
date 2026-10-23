@@ -44,6 +44,10 @@ namespace {
 
 } // namespace
 
+namespace Media {
+
+extern const char kOptionRoundedStickers[];
+
 const char kOptionRoundedStickers[] = "rounded-stickers";
 
 base::options::toggle RoundedStickers({
@@ -51,6 +55,8 @@ base::options::toggle RoundedStickers({
 	.name = "Rounded stickers",
 	.description = "Clip stickers in chats to rounded corners.",
 });
+
+} // namespace Media
 
 constexpr auto kMaxSizeFixed = 512;
 constexpr auto kMaxEmojiSizeFixed = 256;

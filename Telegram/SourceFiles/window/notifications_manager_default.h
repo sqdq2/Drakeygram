@@ -27,6 +27,9 @@ class InputField;
 namespace Window {
 namespace Notifications {
 namespace Default {
+
+extern const char kOptionTopCenterNotify[];
+
 namespace internal {
 class Widget;
 class Notification;

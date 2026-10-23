@@ -23,6 +23,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_todo_list.h"
 #include "data/data_user.h"
 #include "history/view/history_view_item_preview.h"
+#include "history/view/history_view_message.h"
 #include "history/history.h"
 #include "history/history_item.h"
 #include "history/history_item_components.h"
@@ -46,6 +47,8 @@ namespace HistoryView {
 namespace {
 
 } // namespace
+
+extern const char kOptionPlainReplies[];
 
 const char kOptionPlainReplies[] = "plain-replies";
 

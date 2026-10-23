@@ -53,8 +53,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Window {
 
-[[nodiscard]] bool StreamerModeEnabled();
-
 namespace Notifications {
 namespace Default {
 namespace {

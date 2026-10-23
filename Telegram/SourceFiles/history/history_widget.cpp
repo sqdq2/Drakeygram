@@ -221,6 +221,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtGui/QWindow>
 #include <QtCore/QMimeData>
 
+namespace {
+
+} // namespace
+
 const char kOptionConfirmSend[] = "confirm-before-sending";
 
 base::options::toggle ConfirmBeforeSending({
@@ -229,8 +233,6 @@ base::options::toggle ConfirmBeforeSending({
 	.description = "Ask for confirmation before a message is sent from the"
 		" message field.",
 });
-
-namespace {
 
 bool SendConfirmed = false;
 

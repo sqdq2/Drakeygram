@@ -51,8 +51,6 @@ namespace {
 
 const char kOptionStreamerMode[] = "streamer-mode";
 
-} // namespace
-
 base::options::toggle StreamerMode({
 	.id = kOptionStreamerMode,
 	.name = "Streamer mode",

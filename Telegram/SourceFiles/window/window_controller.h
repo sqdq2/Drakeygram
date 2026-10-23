@@ -38,6 +38,10 @@ struct HighlightArgs;
 
 namespace Window {
 
+extern const char kOptionStreamerMode[];
+
+[[nodiscard]] bool StreamerModeEnabled();
+
 class Controller final : public base::has_weak_ptr {
 public:
 	Controller();

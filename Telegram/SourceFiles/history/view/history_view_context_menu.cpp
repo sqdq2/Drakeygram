@@ -133,7 +133,7 @@ namespace {
 
 namespace ContextMenu {
 
-const char kOptionJumpToBeginning[] = "jump-to-beginning";
+extern const char kOptionJumpToBeginning[];
 
 base::options::toggle JumpToBeginning({
 	.id = kOptionJumpToBeginning,
@@ -142,7 +142,7 @@ base::options::toggle JumpToBeginning({
 		" message, which opens the oldest part of the chat.",
 });
 
-const char kOptionMessageDetails[] = "message-details";
+extern const char kOptionMessageDetails[];
 
 base::options::toggle MessageDetails({
 	.id = kOptionMessageDetails,
@@ -151,7 +151,7 @@ base::options::toggle MessageDetails({
 		" date and, for stickers, the pack id and a best-guess author id.",
 });
 
-const char kOptionCopyCallback[] = "copy-button-callback";
+extern const char kOptionCopyCallback[];
 
 base::options::toggle CopyButtonCallback({
 	.id = kOptionCopyCallback,
@@ -160,7 +160,7 @@ base::options::toggle CopyButtonCallback({
 		" right-click an inline callback button.",
 });
 
-const char kOptionMessageShot[] = "message-shot";
+extern const char kOptionMessageShot[];
 
 base::options::toggle MessageShot({
 	.id = kOptionMessageShot,
