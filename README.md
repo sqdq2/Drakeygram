@@ -31,10 +31,6 @@ This project follows the [Telegram API Terms of Service][tos]:
   offline, don't mark stories as viewed, and hide sponsored messages. Using
   them can get an `api_id` revoked or an account limited. They affect only
   what you send or see yourself.
-* Deliberately **not** implemented, because they override other people's
-  choices: keeping self-destructing (view-once or timed) media after it
-  expires, and bypassing a channel's "restrict saving content" setting.
-  Unlocking Telegram Premium features locally is also not implemented.
 * The built-in updater is disabled by default, because it downloads official
   Telegram Desktop packages.
 
