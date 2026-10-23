@@ -45,6 +45,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_window.h"
 
 #include "core/core_screenshot_protection.h"
+#include "base/options.h"
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
@@ -57,7 +58,21 @@ namespace Notifications {
 namespace Default {
 namespace {
 
+const char kOptionTopCenterNotify[] = "top-center-notifications";
+
+base::options::toggle TopCenterNotifications({
+	.id = kOptionTopCenterNotify,
+	.name = "Top center notifications",
+	.description = "Show the app's own popup notifications at the top"
+		" center of the screen. Restart the app after changing it.",
+});
+
 [[nodiscard]] QPoint notificationStartPosition() {
+	if (TopCenterNotifications.value()) {
+		const auto r = NotificationDisplayRect(
+			Core::App().activePrimaryWindow());
+		return QPoint(r.x() + (r.width() - st::notifyWidth) / 2, r.y());
+	}
 	const auto corner = Core::App().settings().notificationsCorner();
 	const auto r = NotificationDisplayRect(Core::App().activePrimaryWindow());
 	const auto isLeft = Core::Settings::IsLeftCorner(corner);
@@ -70,6 +85,9 @@ namespace {
 }
 
 internal::Widget::Direction notificationShiftDirection() {
+	if (TopCenterNotifications.value()) {
+		return internal::Widget::Direction::Down;
+	}
 	auto isTop = Core::Settings::IsTopCorner(Core::App().settings().notificationsCorner());
 	return isTop ? internal::Widget::Direction::Down : internal::Widget::Direction::Up;
 }

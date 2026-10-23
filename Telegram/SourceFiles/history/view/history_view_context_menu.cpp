@@ -137,6 +137,24 @@ base::options::toggle JumpToBeginning({
 		" message, which opens the oldest part of the chat.",
 });
 
+const char kOptionMessageDetails[] = "message-details";
+
+base::options::toggle MessageDetails({
+	.id = kOptionMessageDetails,
+	.name = "Message details",
+	.description = "Add \"Message details\" to the message context menu: ids,"
+		" date and, for stickers, the pack id and a best-guess author id.",
+});
+
+const char kOptionCopyCallback[] = "copy-button-callback";
+
+base::options::toggle CopyButtonCallback({
+	.id = kOptionCopyCallback,
+	.name = "Copy inline button data",
+	.description = "Add \"Copy button data\" to the context menu when you"
+		" right-click an inline callback button.",
+});
+
 const char kOptionMessageShot[] = "message-shot";
 
 base::options::toggle MessageShot({
@@ -1420,6 +1438,75 @@ void AddTopMessageActions(
 	AddViewStatisticsAction(menu, request, list);
 }
 
+void AddCopyButtonDataAction(
+		not_null<Ui::PopupMenu*> menu,
+		const ContextMenuRequest &request) {
+	if (!CopyButtonCallback.value() || !request.link) {
+		return;
+	}
+	const auto handler = std::dynamic_pointer_cast<ReplyMarkupClickHandler>(
+		request.link);
+	if (!handler) {
+		return;
+	}
+	const auto button = handler->getButton();
+	using Type = HistoryMessageMarkupButton::Type;
+	if (!button
+		|| (button->type != Type::Callback
+			&& button->type != Type::CallbackWithPassword)
+		|| button->data.isEmpty()) {
+		return;
+	}
+	const auto data = QString::fromUtf8(button->data);
+	menu->addAction(u"Copy button data"_q, [=] {
+		QGuiApplication::clipboard()->setText(data);
+	}, &st::menuIconCopy);
+}
+
+void AddMessageDetailsAction(
+		not_null<Ui::PopupMenu*> menu,
+		const ContextMenuRequest &request,
+		not_null<ListWidget*> list) {
+	const auto item = request.item;
+	if (!MessageDetails.value()
+		|| !item
+		|| !request.selectedItems.empty()
+		|| !item->isRegular()) {
+		return;
+	}
+	const auto controller = list->controller();
+	menu->addAction(u"Message details"_q, crl::guard(controller, [=] {
+		auto lines = QStringList();
+		lines.push_back(u"Message ID: "_q + QString::number(item->id.bare));
+		lines.push_back(u"Chat ID: "_q
+			+ QString::number(item->history()->peer->id.value));
+		lines.push_back(u"Sender ID: "_q
+			+ QString::number(item->from()->id.value));
+		lines.push_back(u"Date: "_q
+			+ QDateTime::fromSecsSinceEpoch(item->date()).toString(
+				Qt::ISODate));
+		if (const auto media = item->media()) {
+			if (const auto document = media->document()) {
+				lines.push_back(u"Document ID: "_q
+					+ QString::number(document->id));
+				if (const auto sticker = document->sticker()) {
+					if (sticker->set) {
+						lines.push_back(u"Pack ID: "_q
+							+ QString::number(sticker->set.id));
+						lines.push_back(u"Pack author ID (from pack ID): "_q
+							+ QString::number(sticker->set.id >> 32));
+						if (!sticker->set.shortName.isEmpty()) {
+							lines.push_back(u"Pack name: "_q
+								+ sticker->set.shortName);
+						}
+					}
+				}
+			}
+		}
+		controller->show(Ui::MakeInformBox(lines.join('\n')));
+	}), &st::menuIconInfo);
+}
+
 void AddJumpToBeginningAction(
 		not_null<Ui::PopupMenu*> menu,
 		const ContextMenuRequest &request,
@@ -1485,6 +1572,8 @@ void AddMessageActions(
 	AddPostLinkAction(menu, request);
 	AddMessageShotAction(menu, request, list);
 	AddJumpToBeginningAction(menu, request, list);
+	AddCopyButtonDataAction(menu, request);
+	AddMessageDetailsAction(menu, request, list);
 	AddForwardAction(menu, request, list);
 	AddOfferAction(menu, request, list);
 	AddSendNowAction(menu, request, list);

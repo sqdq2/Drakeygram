@@ -74,3 +74,7 @@ published apps; see README.md.
 * "Seconds in message time" (history_view_bottom_info.cpp). Upstream already
   has "unlimited message width" (wide messages), peer IDs, 100 recent stickers
   and mark-all-read as experimental options. (untested)
+* "Top center notifications" (notifications_manager_default.cpp), "Copy inline
+  button data" and "Message details" (history_view_context_menu.cpp). The pack
+  author id in Message details is guessed from the pack id (its upper 32 bits)
+  and may be wrong. (untested)
