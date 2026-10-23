@@ -78,3 +78,5 @@ published apps; see README.md.
   button data" and "Message details" (history_view_context_menu.cpp). The pack
   author id in Message details is guessed from the pack id (its upper 32 bits)
   and may be wrong. (untested)
+* "Hide silent-send button" (history_view_compose_controls.cpp): removes the
+  bell button next to the message field. (untested)

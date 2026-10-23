@@ -144,6 +144,15 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
+const char kOptionHideSilentToggle[] = "hide-silent-toggle";
+
+base::options::toggle HideSilentToggle({
+	.id = kOptionHideSilentToggle,
+	.name = "Hide silent-send button",
+	.description = "Remove the bell button next to the message field in"
+		" channels. Restart the app after changing it.",
+});
+
 constexpr auto kSaveDraftTimeout = crl::time(1000);
 constexpr auto kSaveDraftAnywayTimeout = 5 * crl::time(1000);
 constexpr auto kSaveCloudDraftIdleTimeout = 14 * crl::time(1000);
@@ -5203,7 +5212,7 @@ void ComposeControls::updateControlsVisibility() {
 		_botCommandStart->setVisible(_botCommandShown);
 	}
 	if (_silent) {
-		_silent->setVisible(!hide);
+		_silent->setVisible(!hide && !HideSilentToggle.value());
 	}
 	if (_like) {
 		_like->setVisible(_likeShown);
