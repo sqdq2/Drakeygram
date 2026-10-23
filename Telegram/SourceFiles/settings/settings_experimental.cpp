@@ -39,6 +39,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ffmpeg/ffmpeg_utility.h"
 #include "history/history_item_components.h"
 #include "history/view/controls/compose_controls_common.h"
+#include "history/view/history_view_element.h"
 #include "history/view/history_view_message.h"
 #include "info/profile/info_profile_actions.h"
 #include "info/profile/tabs/adapters/info_profile_tab_media.h"
@@ -48,13 +49,22 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "mainwidget.h"
 #include "media/player/media_player_instance.h"
 #include "mtproto/session_private.h"
+#include "ui/widgets/chat_filters_tabs_slider.h"
 #include "webview/webview_embed.h"
 #include "window/main_window.h"
 #include "window/window_filters_favorite.h"
+#include "window/window_filters_menu.h"
 #include "window/window_peer_menu.h"
 #include "window/window_session_controller.h"
 #include "window/window_controller.h"
 #include "window/notifications_manager.h"
+#include "window/notifications_manager_default.h"
+#include "api/api_updates.h"
+#include "api/api_send_progress.h"
+#include "data/data_histories.h"
+#include "data/data_session.h"
+#include "data/data_stories.h"
+#include "data/components/sponsored_messages.h"
 #include "info/info_flexible_scroll.h"
 #include "chat_helpers/stickers_list_widget.h"
 #include "styles/style_chat_helpers.h"
@@ -67,6 +77,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Settings {
 namespace {
+
+extern const char kOptionHideSimilarChannels[];
+
 
 const auto kOptionsClipboardPrefix = u"tdesktop-flags:"_q;
 
@@ -463,6 +476,38 @@ void SetupExperimental(
 				Core::kOptionDeadlockDetector,
 				Webview::kOptionWebviewDebugEnabled,
 				Webview::kOptionWebviewLegacyEdge,
+			}
+		},
+		{
+			u"Drakeygram"_q,
+			{
+				kOptionNoReadReceipts,
+				kOptionNoTypingStatus,
+				kOptionStayOffline,
+				kOptionKeepDeleted,
+				kOptionNoStoryViews,
+				kOptionHideSponsored,
+				HistoryView::kOptionHideBlocked,
+				HistoryView::kOptionMessageFilters,
+				HistoryView::kOptionTimeSeconds,
+				HistoryView::kOptionServiceTime,
+				HistoryView::kOptionPlainReplies,
+				HistoryView::kOptionRoundedStickers,
+				HistoryView::Controls::kOptionHideSilentToggle,
+				kOptionConfirmSend,
+				ContextMenu::kOptionJumpToBeginning,
+				ContextMenu::kOptionMessageDetails,
+				ContextMenu::kOptionCopyCallback,
+				ContextMenu::kOptionMessageShot,
+				kOptionStreamerMode,
+				kOptionNoNotifyDelay,
+				kOptionTopCenterNotify,
+				Ui::kOptionHideFolderCounters,
+				kOptionHideAllChats,
+				Info::Profile::kOptionHideSimilarTab,
+				kOptionHideSimilarChannels,
+				Core::kOptionMonoFont,
+				kOptionCustomAppIcon,
 			}
 		},
 	};

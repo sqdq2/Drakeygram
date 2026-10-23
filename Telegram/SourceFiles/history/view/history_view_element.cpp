@@ -106,6 +106,34 @@ const char kOptionMessageShot[] = "message-shot";
 
 } // namespace ContextMenu
 
+base::options::toggle JumpToBeginning({
+        .id = ContextMenu::kOptionJumpToBeginning,
+        .name = "Jump to beginning",
+        .description = "Add \"Jump to beginning\" to the context menu of a"
+                " message, which opens the oldest part of the chat.",
+});
+
+base::options::toggle CopyButtonCallback({
+        .id = ContextMenu::kOptionCopyCallback,
+        .name = "Copy inline button data",
+        .description = "Add \"Copy button data\" to the context menu when you"
+                " right-click an inline callback button.",
+});
+
+base::options::toggle MessageDetails({
+        .id = ContextMenu::kOptionMessageDetails,
+        .name = "Message details",
+        .description = "Add \"Message details\" to the message context menu: ids,"
+                " date and, for stickers, the pack id and a best-guess author id.",
+});
+
+base::options::toggle MessageShot({
+        .id = ContextMenu::kOptionMessageShot,
+        .name = "Message Shot",
+        .description = "Add \"Save message as image\" to the context menu of"
+                " a message. Messages that forbid saving content are skipped.",
+});
+
 base::options::toggle MessageFilters({
 	.id = kOptionMessageFilters,
 	.name = "Message filters",

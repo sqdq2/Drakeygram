@@ -133,42 +133,6 @@ namespace {
 
 namespace ContextMenu {
 
-extern const char kOptionJumpToBeginning[];
-
-base::options::toggle JumpToBeginning({
-	.id = kOptionJumpToBeginning,
-	.name = "Jump to beginning",
-	.description = "Add \"Jump to beginning\" to the context menu of a"
-		" message, which opens the oldest part of the chat.",
-});
-
-extern const char kOptionMessageDetails[];
-
-base::options::toggle MessageDetails({
-	.id = kOptionMessageDetails,
-	.name = "Message details",
-	.description = "Add \"Message details\" to the message context menu: ids,"
-		" date and, for stickers, the pack id and a best-guess author id.",
-});
-
-extern const char kOptionCopyCallback[];
-
-base::options::toggle CopyButtonCallback({
-	.id = kOptionCopyCallback,
-	.name = "Copy inline button data",
-	.description = "Add \"Copy button data\" to the context menu when you"
-		" right-click an inline callback button.",
-});
-
-extern const char kOptionMessageShot[];
-
-base::options::toggle MessageShot({
-	.id = kOptionMessageShot,
-	.name = "Message Shot",
-	.description = "Add \"Save message as image\" to the context menu of"
-		" a message. Messages that forbid saving content are skipped.",
-});
-
 } // namespace ContextMenu
 
 constexpr auto kRescheduleLimit = 20;
