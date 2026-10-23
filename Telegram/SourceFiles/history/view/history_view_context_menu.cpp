@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_context_menu.h"
 
 #include "base/options.h"
+#include "core/launcher.h"
 #include "editor/editor_message_render.h"
 #include "editor/editor_message_source.h"
 
@@ -128,6 +129,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace HistoryView {
 namespace {
 
+} // namespace
+
+namespace ContextMenu {
+
 const char kOptionJumpToBeginning[] = "jump-to-beginning";
 
 base::options::toggle JumpToBeginning({
@@ -163,6 +168,8 @@ base::options::toggle MessageShot({
 	.description = "Add \"Save message as image\" to the context menu of"
 		" a message. Messages that forbid saving content are skipped.",
 });
+
+} // namespace ContextMenu
 
 constexpr auto kRescheduleLimit = 20;
 constexpr auto kTagNameLimit = 12;

@@ -223,7 +223,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace {
 
+} // namespace
+
 const char kOptionConfirmSend[] = "confirm-before-sending";
+
+} // namespace
 
 base::options::toggle ConfirmBeforeSending({
 	.id = kOptionConfirmSend,

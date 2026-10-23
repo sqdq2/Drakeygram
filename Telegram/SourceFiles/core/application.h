@@ -128,6 +128,7 @@ enum class QuitReason {
 	QtQuitEvent,
 };
 
+extern const char kOptionMonoFont[];
 extern const char kOptionSkipUrlSchemeRegister[];
 
 class Application final : public QObject {

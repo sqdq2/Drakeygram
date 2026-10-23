@@ -24,6 +24,7 @@ class History;
 namespace HistoryView::Controls {
 
 extern const char kOptionMacCmdReplyImmediately[];
+extern const char kOptionHideSilentToggle[];
 
 struct MessageToEdit {
 	FullMsgId fullId;

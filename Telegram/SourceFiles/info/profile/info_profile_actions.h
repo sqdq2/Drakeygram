@@ -26,6 +26,7 @@ class Controller;
 
 namespace Info::Profile {
 
+extern const char kOptionHideSimilarTab[];
 extern const char kOptionShowPeerIdBelowAbout[];
 extern const char kOptionShowChannelJoinedBelowAbout[];
 

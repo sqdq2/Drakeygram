@@ -33,6 +33,8 @@ namespace Window {
 class SessionController;
 class FolderFavoriteButton;
 
+extern const char kOptionHideAllChats[];
+
 class FiltersMenu final {
 public:
 	FiltersMenu(

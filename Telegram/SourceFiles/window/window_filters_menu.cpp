@@ -17,6 +17,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "base/event_filter.h"
 #include "base/options.h"
+#include "core/launcher.h"
 #include "ui/widgets/chat_filters_tabs_slider.h"
 #include "core/application.h"
 #include "core/core_settings.h"
@@ -52,7 +53,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtGui/QtEvents>
 
 namespace Window {
-namespace {
 
 const char kOptionHideAllChats[] = "hide-all-chats-folder";
 
@@ -62,6 +62,8 @@ base::options::toggle HideAllChatsFolder({
 	.description = "Hide the \"All chats\" button in the folders sidebar."
 		" Restart the app after changing it.",
 });
+
+namespace {
 
 // The folder tabs container, exposed as a list to screen readers.
 class TabListLayout final : public Ui::VerticalLayout {

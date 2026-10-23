@@ -117,7 +117,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Core {
 namespace {
 
+} // namespace
+
 const char kOptionMonoFont[] = "custom-mono-font";
+
+} // namespace
 
 base::options::toggle CustomMonoFont({
 	.id = kOptionMonoFont,
@@ -126,6 +130,9 @@ base::options::toggle CustomMonoFont({
 		" app's data folder for code and monospaced text. Restart the app"
 		" after changing it.",
 });
+
+namespace {
+} // namespace
 
 void ApplyCustomMonoFont() {
 	if (!CustomMonoFont.value()) {

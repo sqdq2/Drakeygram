@@ -23,6 +23,8 @@ struct Response;
 
 namespace Data {
 
+extern const char kOptionNoReadReceipts[];
+
 class Session;
 class Folder;
 struct WebPageDraft;

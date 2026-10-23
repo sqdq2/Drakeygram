@@ -27,6 +27,8 @@ struct EmojiInteractionsBunch;
 
 namespace Api {
 
+extern const char kOptionStayOffline[];
+
 class Updates final {
 public:
 	explicit Updates(not_null<Main::Session*> session);

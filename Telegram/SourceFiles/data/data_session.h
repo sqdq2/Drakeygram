@@ -52,6 +52,8 @@ class Data;
 
 namespace Data {
 
+extern const char kOptionKeepDeleted[];
+
 class Folder;
 class LocationPoint;
 class WallPaper;

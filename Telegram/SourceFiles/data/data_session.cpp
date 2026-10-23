@@ -100,9 +100,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "base/call_delayed.h"
 #include "base/random.h"
 #include "spellcheck/spellcheck_highlight_syntax.h"
+#include "core/launcher.h"
 
 namespace Data {
 namespace {
+
+} // namespace
 
 const char kOptionKeepDeleted[] = "keep-deleted-messages";
 

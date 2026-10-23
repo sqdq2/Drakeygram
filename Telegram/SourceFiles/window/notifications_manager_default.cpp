@@ -46,6 +46,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "core/core_screenshot_protection.h"
 #include "base/options.h"
+#include "core/launcher.h"
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
@@ -58,7 +59,11 @@ namespace Notifications {
 namespace Default {
 namespace {
 
+} // namespace
+
 const char kOptionTopCenterNotify[] = "top-center-notifications";
+
+} // namespace
 
 base::options::toggle TopCenterNotifications({
 	.id = kOptionTopCenterNotify,
@@ -66,6 +71,8 @@ base::options::toggle TopCenterNotifications({
 	.description = "Show the app's own popup notifications at the top"
 		" center of the screen. Restart the app after changing it.",
 });
+
+namespace {
 
 [[nodiscard]] QPoint notificationStartPosition() {
 	if (TopCenterNotifications.value()) {

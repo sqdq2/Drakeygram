@@ -27,9 +27,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "ui/layers/show.h"
 #include "ui/text/text_utilities.h"
+#include "core/launcher.h"
 
 namespace Data {
 namespace {
+
+} // namespace
 
 const char kOptionNoStoryViews[] = "no-story-views";
 

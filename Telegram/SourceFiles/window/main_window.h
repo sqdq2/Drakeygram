@@ -54,6 +54,7 @@ struct CounterLayerArgs {
 	required<style::color> fg;
 };
 
+extern const char kOptionCustomAppIcon[];
 extern const char kOptionNewWindowsSizeAsFirst[];
 extern const char kOptionDisableTouchbar[];
 

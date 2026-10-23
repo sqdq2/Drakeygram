@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "ui/effects/ripple_animation.h"
 #include "base/options.h"
+#include "core/launcher.h"
 #include "ui/widgets/side_bar_button.h"
 #include "styles/style_dialogs.h"
 #include "styles/style_widgets.h"
@@ -16,7 +17,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QScrollBar>
 
 namespace Ui {
-namespace {
 
 const char kOptionHideFolderCounters[] = "hide-folder-counters";
 
@@ -27,7 +27,7 @@ base::options::toggle HideFolderCountersOption({
 		" app after changing it.",
 });
 
-} // namespace
+namespace {
 
 bool HideFolderCounters() {
 	return HideFolderCountersOption.value();

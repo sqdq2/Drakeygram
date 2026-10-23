@@ -28,6 +28,8 @@ class RpWidget;
 
 namespace Data {
 
+extern const char kOptionHideSponsored[];
+
 class MediaPreload;
 
 struct SponsoredReportResult final {

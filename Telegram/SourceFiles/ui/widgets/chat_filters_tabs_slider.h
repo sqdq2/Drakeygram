@@ -20,6 +20,8 @@ struct SettingsSlider;
 
 namespace Ui {
 
+extern const char kOptionHideFolderCounters[];
+
 [[nodiscard]] bool HideFolderCounters();
 
 class RpWidget;
