@@ -1,156 +1,131 @@
-# AyuGram
+<div align="center">
 
-![AyuGram Logo](.github/AyuGram.png) ![AyuChan](.github/AyuChan.png)
+# Drakeygram
 
-[ English  |   [Русский](README-RU.md) ]
+**Independent Telegram Desktop client — privacy, control, zero third-party tracking**
+
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/sqdq2/Drakeygram)
+[![License](https://img.shields.io/badge/license-GPL--3.0-green)](https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL)
+[![Status](https://img.shields.io/badge/status-independent%20fork-success)](https://github.com/sqdq2/Drakeygram)
+
+*Built on Telegram Desktop. Fully independent. No external telemetry.*
+
+</div>
+
+---
+
+## Why Drakeygram?
+
+Drakeygram is a **self-contained** Telegram Desktop fork focused on privacy and power-user features.  
+It does **not** phone home to any AyuGram / third-party config servers. All remote config, external language CDNs, and donate tracking endpoints have been removed or disabled.
+
+| | |
+|---|---|
+| **Identity** | Drakeygram — your client, your name |
+| **Network** | Telegram servers only (plus optional public translators you choose) |
+| **Trackers** | None to former upstream fork services |
+| **Code** | Open source on this repository |
+
+---
 
 ## Features
 
-- Full ghost mode (flexible)
-- Messages history
-- Anti-recall
+### Privacy & Ghost Mode
+- **Ghost Mode** — control read receipts, online status, typing, upload progress, story views
+- Per-account or global ghost profiles
+- Optional mark-as-read after action / scheduled send helpers
+- Silent send defaults
+
+### Message control
+- **Anti-recall** — keep deleted messages locally
+- **Message history / revisions** — edited message history
+- Local filters (regex) for content control
+- Enhanced context menus and message tools
+
+### Appearance & UX
 - Font customization
-- Streamer mode
-- Local Telegram Premium
-- Translator
-- Media preview & quick reaction on force click (macOS)
-- Enhanced appearance
+- Streamer mode (platform-aware)
+- Local Telegram Premium visuals (client-side)
+- Custom icons / appearance options
+- Message shot (screenshot) tools
+- Media preview enhancements
 
-And many more. Check out our [Documentation](https://docs.ayugram.one/desktop/).
+### Productivity
+- Built-in **translator** (Google / Yandex style providers — optional, user-initiated)
+- Smart forward helpers
+- Filters with import/export
+- macOS force-click style interactions where supported
 
-<h3>
-  <details>
-    <summary>Preview</summary>
-    <table>
-      <tr>
-        <td><img src='.github/demos/demo1.png' width='268' alt='Preferences'></td>
-        <td><img src='.github/demos/demo2.png' width='268' alt='AyuGram Options'></td>
-        <td><img src='.github/demos/demo3.png' width='268' alt='Message Filters'></td>
-      </tr>
-      <tr>
-        <td><img src='.github/demos/demo4.png' width='268' alt='Appearance'></td>
-        <td><img src='.github/demos/demo5.png' width='268' alt='Chats'></td>
-      </tr>
-    </table>
-  </details>
-</h3>
+> Feature set inherits the hardened desktop fork lineage and keeps local-first behavior. Nothing requires AyuGram accounts or servers.
 
-## Downloads
+---
 
-### Windows
+## Independence guarantee
 
-#### Official
+This repository has been hard-cleaned for independence:
 
-You can download prebuilt Windows binary from [Releases tab](https://github.com/AyuGram/AyuGramDesktop/releases) or from
-the [Telegram channel](https://t.me/AyuGramReleases).
+- Remote config manager (`RCManager`) — **no network fetches**
+- External language pack CDN — **disabled**
+- Donate / supporter remote lists — **empty / local only**
+- Branding, desktop IDs, and binary name — **Drakeygram**
+- Docs and settings links — **no AyuGram domains**
 
-#### Winget
+If you fork this tree further, keep those guarantees.
 
-```bash
-winget install RadolynLabs.AyuGramDesktop
-```
+---
 
-#### Scoop
+## Building
 
-```bash
-scoop bucket add extras
-scoop install ayugram
-```
+Drakeygram follows the same build system as [Telegram Desktop](https://github.com/telegramdesktop/tdesktop).
 
-#### Self-built
+1. Install the official **tdesktop** dependencies for your OS  
+   → https://github.com/telegramdesktop/tdesktop/blob/dev/docs/building-linux.md  
+   → https://github.com/telegramdesktop/tdesktop/blob/dev/docs/building-mac.md  
+   → https://github.com/telegramdesktop/tdesktop/blob/dev/docs/building-win-x64.md
 
-Follow [official guide](https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs/building-win-x64.md) if you want to
-build by yourself.
-
-### macOS
-
-#### Official
-
-You can download prebuilt macOS package from [Releases tab](https://github.com/AyuGram/AyuGramDesktop/releases).
-
-#### Homebrew
+2. Clone with submodules:
 
 ```bash
-brew install --cask ayugram
+git clone --recursive https://github.com/sqdq2/Drakeygram.git
+cd Drakeygram
 ```
 
-### Arch Linux
+3. Configure and build with CMake (same flags you use for tdesktop).
 
-#### From source (recommended)
+The binary output name is **Drakeygram**. Linux desktop ID: `com.drakeygram.desktop`.
 
-Install `ayugram-desktop` from [AUR](https://aur.archlinux.org/packages/ayugram-desktop).
+---
 
-#### Prebuilt binaries
+## Repository layout (relevant bits)
 
-Install `ayugram-desktop-bin` from [AUR](https://aur.archlinux.org/packages/ayugram-desktop-bin).
-
-Note: these binaries aren't officially maintained by us.
-
-### NixOS
-
-#### Flake (recommended)
-
-Install `ayugram-desktop` from [ndfined-crp/ayugram-desktop](https://github.com/ndfined-crp/ayugram-desktop)
-
-#### Nixpkgs
-
-Install `ayugram-desktop` from [nixpkgs](https://search.nixos.org/packages?channel=unstable&show=ayugram-desktop)
-
-### ALT Linux
-
-[Sisyphus](https://packages.altlinux.org/en/sisyphus/srpms/ayugram-desktop/)
-
-### Gentoo Linux
-
-See [this repository](https://codeberg.org/OverLessArtem/ayugram-ebuild-gentoo) for installation manual.
-
-### Void Linux
-See [this repository](https://codeberg.org/OverLessArtem/ayugram-template-void) for installation manual.
-
-### EPM
-
-`epm play ayugram`
-
-### Fedora
-
-From [RPM Fusion](https://admin.rpmfusion.org/pkgdb/package/free/ayugram-desktop/) repository.
-
-```bash
-dnf install ayugram-desktop
+```text
+Telegram/SourceFiles/ayu/     # Privacy & power features (local)
+lib/xdg/                      # Drakeygram desktop integration
+RESTORE_CMAKE.sh              # Emergency CMakeLists recovery helper
+scripts/mass_rebrand_headers.py
 ```
 
-### Any other Linux distro
+Internal folder name `ayu/` is historical pathing only — **not** a network dependency.
 
-Flatpak: https://github.com/0FL01/AyuGramDesktop-flatpak
-
-Or follow the [official guide](https://github.com/AyuGram/AyuGramDesktop/blob/dev/docs/building-linux.md).
-
-## Donation
-
-Enjoy using **AyuGram**? Consider sending us a tip!
-
-[Here's available methods.](https://docs.ayugram.one/donate/)
+---
 
 ## Credits
 
-### Telegram clients
+- [Telegram Desktop](https://github.com/telegramdesktop/tdesktop) — base client  
+- Community privacy / customization work that this fork continues independently  
 
-- [Telegram Desktop](https://github.com/telegramdesktop/tdesktop)
-- [Kotatogram](https://github.com/kotatogram/kotatogram-desktop)
-- [64Gram](https://github.com/TDesktop-x64/tdesktop)
-- [Forkgram](https://github.com/forkgram/tdesktop)
+Drakeygram is **not** affiliated with Telegram FZ-LLC or any other third-party client brand.
 
-### Libraries used
+---
 
-- [JSON for Modern C++](https://github.com/nlohmann/json)
-- [SQLite](https://github.com/sqlite/sqlite)
-- [sqlite_orm](https://github.com/fnc12/sqlite_orm)
-- [androidx sources](https://github.com/androidx/androidx)
+## License
 
-### Icons
+GPL-3.0 (same family as Telegram Desktop). See upstream `LEGAL` and project license files.
 
-- [Solar Icon Set](https://www.figma.com/community/file/1166831539721848736)
+---
 
-### Bots
+<div align="center">
 
-- [TelegramDB](https://t.me/tgdatabase) for username lookup by ID (until closing free inline mode at 2 April 2026)
+**Drakeygram** — independent, private, yours.
+
+</div>
