@@ -33,10 +33,7 @@ namespace {
 
 void BuildTranslator(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	builder.addSubsectionTitle(tr::lng_translate_settings_subtitle());
-
 	auto *settings = &AyuSettings::getInstance();
-
-	// Online third-party translate disabled. Telegram (+ optional OS native).
 	const auto options = std::vector{
 		std::pair(TranslationProvider::Telegram, QString("Telegram")),
 	};
@@ -46,35 +43,20 @@ void BuildTranslator(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		availableOptions.push_back(std::pair(
 			TranslationProvider::Native,
 			[] {
-				if constexpr (Platform::IsMac()) {
-					return QString("macOS");
-				} else if constexpr (Platform::IsWindows()) {
-					return QString("Windows");
-				} else {
-					return QString("Linux");
-				}
+				if constexpr (Platform::IsMac()) return QString("macOS");
+				else if constexpr (Platform::IsWindows()) return QString("Windows");
+				else return QString("Linux");
 			}()));
 	}
 	auto optionLabels = std::vector<QString>();
-	optionLabels.reserve(availableOptions.size());
-	for (const auto &option : availableOptions) {
-		optionLabels.push_back(option.second);
-	}
-
+	for (const auto &option : availableOptions) optionLabels.push_back(option.second);
 	const auto getIndex = [=](TranslationProvider val) {
-		const auto i = ranges::find(
-			availableOptions,
-			val,
-			&std::pair<TranslationProvider, QString>::first);
-		return (i != end(availableOptions))
-			? int(i - begin(availableOptions))
-			: 0;
+		const auto i = ranges::find(availableOptions, val, &std::pair<TranslationProvider, QString>::first);
+		return (i != end(availableOptions)) ? int(i - begin(availableOptions)) : 0;
 	};
-
 	auto currentVal = AyuSettings::getInstance().translationProviderValue()
 		| rpl::map(getIndex)
 		| rpl::map([=](int val) { return availableOptions[val].second; });
-
 	const auto button = builder.addButton({
 		.id = u"ayu/translationProvider"_q,
 		.title = tr::ayu_TranslationProvider(),
@@ -82,42 +64,28 @@ void BuildTranslator(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.label = std::move(currentVal),
 		.onClick = [=] {
 			if (const auto controller = Core::App().activeWindow()->sessionController()) {
-				controller->show(Box(
-						[=](not_null<Ui::GenericBox*> box) {
-							const auto save = [=](int index) {
-								const auto option = availableOptions[index].first;
-								AyuSettings::getInstance().setTranslationProvider(option);
-								if constexpr (Platform::IsMac()) {
-									if (option == TranslationProvider::Native) {
-										controller->showToast(Ui::Toast::Config{
-											.text = tr::lng_translate_settings_use_platform_mac_about(tr::now, tr::rich),
-											.duration = 6 * crl::time(1000)
-										});
-									}
-								}
-							};
-							SingleChoiceBox(box, {
-								.title = tr::ayu_TranslationProvider(),
-								.options = optionLabels,
-								.initialSelection = getIndex(settings->translationProvider()),
-								.callback = save,
-							});
-						}));
+				controller->show(Box([=](not_null<Ui::GenericBox*> box) {
+					const auto save = [=](int index) {
+						AyuSettings::getInstance().setTranslationProvider(availableOptions[index].first);
+					};
+					SingleChoiceBox(box, {
+						.title = tr::ayu_TranslationProvider(),
+						.options = optionLabels,
+						.initialSelection = getIndex(settings->translationProvider()),
+						.callback = save,
+					});
+				}));
 			}
 		},
 	});
-	if (button) {
-		ayu.addBetaBadge(button);
-	}
+	if (button) ayu.addBetaBadge(button);
 }
 
 void BuildLanguagePacks(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	builder.addSubsectionTitle(rpl::single(QString("Language packs")));
-
 	if (!AyuLanguage::currentInstance()) {
 		AyuLanguage::init();
 	}
-
 	builder.addButton({
 		.id = u"ayu/langPackRefresh"_q,
 		.title = rpl::single(QString("Refresh language list")),
@@ -125,32 +93,29 @@ void BuildLanguagePacks(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.onClick = [=] {
 			if (const auto l = AyuLanguage::currentInstance()) {
 				l->refreshCatalog();
-				if (const auto controller = Core::App().activeWindow()->sessionController()) {
-					controller->showToast(QString("Refreshing language catalog…"));
+				if (const auto c = Core::App().activeWindow()->sessionController()) {
+					c->showToast(QString("Refreshing language catalog…"));
 				}
 			}
 		},
 	});
-
 	builder.addButton({
 		.id = u"ayu/langPackDownload"_q,
 		.title = rpl::single(QString("Download language pack")),
 		.st = &st::settingsButtonNoIcon,
-		.label = rpl::single(QString("Arabic, Russian, …")),
+		.label = rpl::single(QString("Arabic, Russian, Chinese, …")),
 		.onClick = [=] {
 			const auto l = AyuLanguage::currentInstance();
-			if (!l) {
-				return;
-			}
+			if (!l) return;
 			l->refreshCatalog();
 			auto langs = l->availableLanguages();
 			if (langs.empty()) {
 				const char *ids[] = {
-					"en", "ar", "ru", "uk", "de", "fr", "es", "tr", "zh-hans", "zh-hant",
-					"ja", "ko", "hi", "pt-br", "it", "pl", "fa", "id", "vi", "th", "he",
-					"nl", "sv", "cs", "ro", "hu", "el", "bg", "sr", "hr", "sk", "da", "fi",
-					"no", "ms", "bn", "ta", "te", "ml", "sw", "ka", "hy", "az", "kk", "uz",
-					"be", "ca", "eu", "gl", "pt", "ur"
+					"en","ar","ru","uk","de","fr","es","tr","zh-hans","zh-hant",
+					"ja","ko","hi","pt-br","it","pl","fa","id","vi","th","he",
+					"nl","sv","cs","ro","hu","el","bg","sr","hr","sk","da","fi",
+					"no","ms","bn","ta","te","ml","sw","ka","hy","az","kk","uz",
+					"be","ca","eu","gl","pt","ur"
 				};
 				for (const auto *id : ids) {
 					DrakeyLanguageInfo info;
@@ -162,47 +127,30 @@ void BuildLanguagePacks(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 				}
 			}
 			auto optionLabels = std::vector<QString>();
-			optionLabels.reserve(langs.size());
 			for (const auto &info : langs) {
 				auto line = info.nativeName.isEmpty() ? info.name : info.nativeName;
-				if (!info.name.isEmpty() && info.name != info.nativeName) {
+				if (!info.name.isEmpty() && info.name != info.nativeName)
 					line = info.name + QStringLiteral(" — ") + info.nativeName;
-				}
-				if (info.installed || l->isInstalled(info.id)) {
+				if (info.installed || l->isInstalled(info.id))
 					line += QStringLiteral(" ✓");
-				}
 				optionLabels.push_back(line);
 			}
 			if (const auto controller = Core::App().activeWindow()->sessionController()) {
 				controller->show(Box([=](not_null<Ui::GenericBox*> box) {
 					const auto save = [=](int index) {
-						if (index < 0 || index >= int(langs.size())) {
-							return;
-						}
+						if (index < 0 || index >= int(langs.size())) return;
 						const auto id = langs[index].id;
 						controller->showToast(QString("Downloading %1…").arg(id));
-						QObject::connect(
-							l,
-							&AyuLanguage::languageDownloaded,
-							controller,
+						QObject::connect(l, &AyuLanguage::languageDownloaded, controller,
 							[=](const QString &doneId) {
-								if (doneId == id) {
-									controller->showToast(
-										QString("Language pack ready: %1").arg(id));
-								}
-							},
-							static_cast<Qt::ConnectionType>(Qt::UniqueConnection));
-						QObject::connect(
-							l,
-							&AyuLanguage::languageDownloadFailed,
-							controller,
+								if (doneId == id)
+									controller->showToast(QString("Language pack ready: %1").arg(id));
+							}, static_cast<Qt::ConnectionType>(Qt::UniqueConnection));
+						QObject::connect(l, &AyuLanguage::languageDownloadFailed, controller,
 							[=](const QString &doneId, const QString &err) {
-								if (doneId == id) {
-									controller->showToast(
-										QString("Download failed: %1").arg(err));
-								}
-							},
-							static_cast<Qt::ConnectionType>(Qt::UniqueConnection));
+								if (doneId == id)
+									controller->showToast(QString("Download failed: %1").arg(err));
+							}, static_cast<Qt::ConnectionType>(Qt::UniqueConnection));
 						l->fetchLanguage(id);
 					};
 					SingleChoiceBox(box, {
@@ -217,17 +165,65 @@ void BuildLanguagePacks(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	});
 }
 
-// NOTE: remainder of BuildShowPeerId / BuildQoLToggles kept from upstream file.
-// Full integration: call BuildLanguagePacks next to BuildTranslator in BuildQoLToggles.
-
 void BuildShowPeerId(SectionBuilder &builder) {
-	// truncated body restored from previous revision on next full sync if needed
-	(void)builder;
+	auto *settings = &AyuSettings::getInstance();
+	const auto options = std::vector{
+		std::pair(PeerIdDisplay::Hidden, tr::ayu_SettingsShowPeerIdHide(tr::now)),
+		std::pair(PeerIdDisplay::TelegramApi, QString("Telegram API")),
+		std::pair(PeerIdDisplay::BotApi, QString("Bot API")),
+	};
+	auto optionLabels = std::vector<QString>();
+	for (const auto &o : options) optionLabels.push_back(o.second);
+	const auto getIndex = [=](PeerIdDisplay val) {
+		const auto i = ranges::find(options, val, &std::pair<PeerIdDisplay, QString>::first);
+		return (i != end(options)) ? int(i - begin(options)) : 0;
+	};
+	auto currentVal = settings->showPeerIdValue()
+		| rpl::map(getIndex)
+		| rpl::map([=](int val) { return options[val].second; });
+	builder.addButton({
+		.id = u"ayu/showPeerId"_q,
+		.title = tr::ayu_SettingsShowPeerId(),
+		.st = &st::settingsButtonNoIcon,
+		.label = std::move(currentVal),
+		.onClick = [=] {
+			if (const auto controller = Core::App().activeWindow()->sessionController()) {
+				controller->show(Box([=](not_null<Ui::GenericBox*> box) {
+					SingleChoiceBox(box, {
+						.title = tr::ayu_SettingsShowPeerId(),
+						.options = optionLabels,
+						.initialSelection = getIndex(settings->showPeerId()),
+						.callback = [=](int index) {
+							settings->setShowPeerId(options[index].first);
+						},
+					});
+				}));
+			}
+		},
+	});
 }
 
 void BuildQoLToggles(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	BuildTranslator(builder, ayu);
 	BuildLanguagePacks(builder, ayu);
+
+	ayu.addSectionDivider();
+
+	ayu.addSettingToggle({
+		.id = u"ayu/showMessageSeconds"_q,
+		.title = tr::ayu_SettingsShowMessageSeconds(),
+		.getter = &AyuSettings::showMessageSeconds,
+		.setter = &AyuSettings::setShowMessageSeconds,
+	});
+	BuildShowPeerId(builder);
+	ayu.addSectionDivider();
+	builder.addSubsectionTitle(rpl::single(QString("Webview")));
+	ayu.addSettingToggle({
+		.id = u"ayu/spoofWebviewAsAndroid"_q,
+		.title = tr::ayu_SettingsSpoofWebviewAsAndroid(),
+		.getter = &AyuSettings::spoofWebviewAsAndroid,
+		.setter = &AyuSettings::setSpoofWebviewAsAndroid,
+	});
 }
 
 const auto kMeta = BuildHelper({
