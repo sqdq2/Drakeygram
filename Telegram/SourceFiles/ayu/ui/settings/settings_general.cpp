@@ -1,13 +1,10 @@
-// This is the source code of AyuGram for Desktop.
-//
-// We do not and cannot prevent the use of our code,
-// but be respectful and credit the original author.
-//
-// Copyright @Radolyn, 2026
+// Drakeygram Desktop
+// Fully independent fork. No external tracking.
 #include "ayu/ui/settings/settings_general.h"
 
 #include "lang_auto.h"
 #include "ayu/ayu_settings.h"
+#include "ayu/ayu_lang.h"
 #include "ayu/ui/settings/ayu_builder.h"
 #include "ayu/ui/settings/settings_ayu_utils.h"
 #include "ayu/ui/settings/settings_main.h"
@@ -38,10 +35,9 @@ void BuildTranslator(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 
 	auto *settings = &AyuSettings::getInstance();
 
+	// Online third-party translate disabled. Telegram (+ optional OS native).
 	const auto options = std::vector{
 		std::pair(TranslationProvider::Telegram, QString("Telegram")),
-		std::pair(TranslationProvider::Google, QString("Google")),
-		std::pair(TranslationProvider::Yandex, QString("Yandex")),
 	};
 	const auto nativeAvailable = Platform::IsTranslateProviderAvailable();
 	auto availableOptions = options;
@@ -115,6 +111,115 @@ void BuildTranslator(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	}
 }
 
+
+void BuildLanguagePacks(SectionBuilder &builder, AyuSectionBuilder &ayu) {
+	builder.addSubsectionTitle(rpl::single(QString("Language packs")));
+
+	const auto lang = AyuLanguage::currentInstance();
+	if (!lang) {
+		AyuLanguage::init();
+	}
+
+	// Refresh catalog
+	builder.addButton({
+		.id = u"ayu/langPackRefresh"_q,
+		.title = rpl::single(QString("Refresh language list")),
+		.st = &st::settingsButtonNoIcon,
+		.onClick = [=] {
+			if (const auto l = AyuLanguage::currentInstance()) {
+				l->refreshCatalog();
+				if (const auto controller = Core::App().activeWindow()->sessionController()) {
+					controller->showToast(QString("Refreshing language catalog…"));
+				}
+			}
+		},
+	});
+
+	// Download / select pack
+	const auto label = rpl::single(QString("Download or use pack"));
+	builder.addButton({
+		.id = u"ayu/langPackDownload"_q,
+		.title = rpl::single(QString("Download language pack")),
+		.st = &st::settingsButtonNoIcon,
+		.label = label,
+		.onClick = [=] {
+			const auto l = AyuLanguage::currentInstance();
+			if (!l) {
+				return;
+			}
+			// Ensure catalog loaded
+			l->refreshCatalog();
+			auto langs = l->availableLanguages();
+			if (langs.empty()) {
+				// Fallback static list from common ids
+				const char *ids[] = {
+					"en", "ar", "ru", "uk", "de", "fr", "es", "tr", "zh-hans", "zh-hant",
+					"ja", "ko", "hi", "pt-br", "it", "pl", "fa", "id", "vi", "th", "he"
+				};
+				for (const auto *id : ids) {
+					DrakeyLanguageInfo info;
+					info.id = QString::fromUtf8(id);
+					info.name = info.id;
+					info.nativeName = info.id;
+					info.installed = l->isInstalled(info.id);
+					langs.push_back(info);
+				}
+			}
+			auto optionLabels = std::vector<QString>();
+			optionLabels.reserve(langs.size());
+			for (const auto &info : langs) {
+				auto line = info.nativeName.isEmpty() ? info.name : info.nativeName;
+				if (!info.name.isEmpty() && info.name != info.nativeName) {
+					line = info.name + QStringLiteral(" — ") + info.nativeName;
+				}
+				if (info.installed || l->isInstalled(info.id)) {
+					line += QStringLiteral(" ✓");
+				}
+				optionLabels.push_back(line);
+			}
+			if (const auto controller = Core::App().activeWindow()->sessionController()) {
+				controller->show(Box([=](not_null<Ui::GenericBox*> box) {
+					const auto save = [=](int index) {
+						if (index < 0 || index >= int(langs.size())) {
+							return;
+						}
+						const auto id = langs[index].id;
+						controller->showToast(QString("Downloading %1…").arg(id));
+						// Apply when finished
+						QObject::connect(
+							l,
+							&AyuLanguage::languageDownloaded,
+							controller,
+							[=](const QString &doneId) {
+								if (doneId == id) {
+									controller->showToast(QString("Language pack ready: %1").arg(id));
+								}
+							},
+							static_cast<Qt::ConnectionType>(Qt::UniqueConnection));
+						QObject::connect(
+							l,
+							&AyuLanguage::languageDownloadFailed,
+							controller,
+							[=](const QString &doneId, const QString &err) {
+								if (doneId == id) {
+									controller->showToast(QString("Download failed: %1").arg(err));
+								}
+							},
+							static_cast<Qt::ConnectionType>(Qt::UniqueConnection));
+						l->fetchLanguage(id);
+					};
+					SingleChoiceBox(box, {
+						.title = rpl::single(QString("Language packs")),
+						.options = optionLabels,
+						.initialSelection = 0,
+						.callback = save,
+					});
+				}));
+			}
+		},
+	});
+}
+
 void BuildShowPeerId(SectionBuilder &builder) {
 	auto *settings = &AyuSettings::getInstance();
 
@@ -158,6 +263,7 @@ void BuildQoLToggles(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	auto *settings = &AyuSettings::getInstance();
 
 	BuildTranslator(builder, ayu);
+	BuildLanguagePacks(builder, ayu);
 	ayu.addSectionDivider();
 
 	builder.addSubsectionTitle(tr::ayu_CategoryGeneral());
