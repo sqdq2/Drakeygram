@@ -1,6 +1,6 @@
 // Drakeygram Desktop
 // Fully independent fork. No external tracking.
-// Google Translate backend is a local no-op (no network).
+// LibreTranslate client (class name kept for ABI/include compatibility).
 
 #pragma once
 
@@ -10,6 +10,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QSet>
 #include <QtCore/QString>
+#include <QtNetwork/QNetworkAccessManager>
 
 namespace Ayu::Translator {
 
@@ -26,8 +27,12 @@ public:
 		const MultiThreadArgs &args
 	) override;
 
+	[[nodiscard]] int getConcurrencyLimit() const override { return 4; }
+
 private:
 	explicit GoogleTranslator(QObject *parent = nullptr);
+
+	QNetworkAccessManager _nam;
 };
 
 }
