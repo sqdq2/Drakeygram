@@ -1,5 +1,6 @@
 // Drakeygram Desktop
 // Fully independent fork. No external tracking.
+// Google Translate backend is a local no-op (no network).
 
 #pragma once
 
@@ -19,7 +20,6 @@ class GoogleTranslator final : public MultiThreadTranslator
 public:
 	static GoogleTranslator &instance();
 
-	// all languages
 	[[nodiscard]] QSet<QString> supportedLanguages() const override { return {}; }
 
 	[[nodiscard]] QPointer<QNetworkReply> startSingleTranslation(
@@ -28,8 +28,6 @@ public:
 
 private:
 	explicit GoogleTranslator(QObject *parent = nullptr);
-
-	QNetworkAccessManager _nam;
 };
 
 }

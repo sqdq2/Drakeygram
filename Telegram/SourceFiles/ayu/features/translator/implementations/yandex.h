@@ -1,5 +1,6 @@
 // Drakeygram Desktop
 // Fully independent fork. No external tracking.
+// Yandex Translate backend is a local no-op (no network).
 
 #pragma once
 
@@ -27,9 +28,6 @@ public:
 
 private:
 	explicit YandexTranslator(QObject *parent = nullptr);
-
-	QNetworkAccessManager _nam;
-	QString _uuid;
 };
 
 }

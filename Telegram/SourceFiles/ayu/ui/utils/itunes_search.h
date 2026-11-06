@@ -1,18 +1,16 @@
-// This is the source code of AyuGram for Desktop.
-//
-// We do not and cannot prevent the use of our code,
-// but be respectful and credit the original author.
-//
-// Copyright @Radolyn, 2026
+// Drakeygram Desktop
+// Fully independent fork. No external tracking.
+
 #pragma once
 
 #include <QtGui/QPixmap>
 
 namespace Ayu::Ui::Itunes {
 
+// Network disabled: always returns an empty pixmap.
 QPixmap FetchCover(const QString &performer,
-                   const QString &title,
-                   int sizeHintPx = 300,
-                   int timeoutMs = 5000);
+				   const QString &title,
+				   int sizeHintPx = 300,
+				   int timeoutMs = 5000);
 
 }
