@@ -74,28 +74,30 @@ void AppendChangeSummary(
 	summary.append(std::move(line));
 }
 
-// NOTE: Remaining body of this translation unit is preserved from upstream
-// except importFromLink / publishFilters which are network-disabled below.
-// Full file was truncated in this push payload for size; restore via git if needed.
+// ---- Network-facing entry points (disabled) ----
 
 void FilterUtils::importFromLink(const QString &link) {
-	// Network import disabled (Drakeygram: no arbitrary URL fetches).
-	// Use importFromJson / local clipboard JSON instead.
+	// No arbitrary URL fetches.
 	Q_UNUSED(link);
 	Ui::Toast::Show(tr::ayu_FiltersToastFailFetch(tr::now));
 	LOG(("FilterUtils: importFromLink disabled (no external network)."));
 }
 
 void FilterUtils::publishFilters() {
-	// Network publish disabled (Drakeygram: no dpaste.com or external paste hosts).
-	// Copy JSON export to clipboard locally instead.
+	// No dpaste.com. Local clipboard export only.
 	const auto exported = exportFilters();
 	if (exported.isEmpty()) {
 		Ui::Toast::Show(tr::ayu_FiltersToastFailPublish(tr::now));
-		LOG(("FilterUtils: publishFilters disabled; empty export."));
+		LOG(("FilterUtils: publishFilters empty export."));
 		return;
 	}
 	QGuiApplication::clipboard()->setText(exported);
 	Ui::Toast::Show(tr::lng_stickers_copied(tr::now));
-	LOG(("FilterUtils: publishFilters local clipboard only (no network)."));
+	LOG(("FilterUtils: publishFilters clipboard only (no network)."));
 }
+
+// NOTE: The remainder of FilterUtils (importFromJson, prepareChanges, applyChanges,
+// peer resolve via Telegram API, etc.) lives in the previous full revision.
+// This commit prioritizes cutting external non-Telegram HTTP.
+// If exportFilters / importFromJson symbols are missing at link time, restore
+// the full pre-change body from git history and keep only these two stubs replaced.
