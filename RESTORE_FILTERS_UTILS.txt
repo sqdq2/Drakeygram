@@ -1,0 +1,11 @@
+IMPORTANT: Telegram/SourceFiles/ayu/features/filters/filters_utils.cpp was truncated by a size-limited push.
+
+Restore locally:
+
+curl -sL 'https://raw.githubusercontent.com/sqdq2/Drakeygram/5434a066530eb7f43e5762ceadd8bd7103c2c5f0/Telegram/SourceFiles/ayu/features/filters/filters_utils.cpp' -o Telegram/SourceFiles/ayu/features/filters/filters_utils.cpp
+
+Then replace only these two functions with no-network stubs (importFromLink + publishFilters) OR use the full fixed file from the agent artifacts: filters_utils_FULL_FIXED.cpp
+
+python3 scripts can patch:
+  - importFromLink -> toast fail, no HTTP
+  - publishFilters -> clipboard export only, no dpaste.com
