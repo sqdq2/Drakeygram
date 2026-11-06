@@ -1,6 +1,6 @@
 // Drakeygram Desktop
-// Fully independent fork. No external tracking.
-// LibreTranslate client (class name kept for ABI/include compatibility).
+// LibreTranslate client (works with public API — no local server required).
+// Class name kept for build/include compatibility with existing provider wiring.
 
 #pragma once
 
@@ -27,7 +27,10 @@ public:
 		const MultiThreadArgs &args
 	) override;
 
-	[[nodiscard]] int getConcurrencyLimit() const override { return 4; }
+	// Parallel requests for translating many messages / whole chat.
+	[[nodiscard]] int getConcurrencyLimit() const override { return 6; }
+	[[nodiscard]] int getMaxRetries() const override { return 2; }
+	[[nodiscard]] int getBaseWaitTimeMs() const override { return 400; }
 
 private:
 	explicit GoogleTranslator(QObject *parent = nullptr);
