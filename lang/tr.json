@@ -1,0 +1,11 @@
+{
+  "CategoryGeneral": "Genel",
+  "TranslationProvider": "Çeviri sağlayıcısı",
+  "LanguagePacks": "Dil paketleri",
+  "LanguagePacksDownload": "Dil paketini indir",
+  "LanguagePacksRefresh": "Listeyi yenile",
+  "LanguagePackInstalled": "Yüklü",
+  "LanguagePackDownloading": "İndiriliyor…",
+  "LanguagePackReady": "Paket hazır",
+  "LanguagePackFailed": "İndirme başarısız"
+}

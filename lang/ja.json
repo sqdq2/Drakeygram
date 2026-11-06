@@ -1,0 +1,11 @@
+{
+  "CategoryGeneral": "一般",
+  "TranslationProvider": "翻訳プロバイダー",
+  "LanguagePacks": "言語パック",
+  "LanguagePacksDownload": "言語パックをダウンロード",
+  "LanguagePacksRefresh": "一覧を更新",
+  "LanguagePackInstalled": "インストール済み",
+  "LanguagePackDownloading": "ダウンロード中…",
+  "LanguagePackReady": "言語パック準備完了",
+  "LanguagePackFailed": "ダウンロード失敗"
+}

@@ -1,0 +1,11 @@
+{
+  "CategoryGeneral": "General",
+  "TranslationProvider": "Translation provider",
+  "LanguagePacks": "Language packs",
+  "LanguagePacksDownload": "Download language pack",
+  "LanguagePacksRefresh": "Refresh language list",
+  "LanguagePackInstalled": "Installed",
+  "LanguagePackDownloading": "Downloading…",
+  "LanguagePackReady": "Language pack ready",
+  "LanguagePackFailed": "Download failed"
+}

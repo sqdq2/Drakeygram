@@ -1,0 +1,11 @@
+{
+  "CategoryGeneral": "通用",
+  "TranslationProvider": "翻译提供方",
+  "LanguagePacks": "语言包",
+  "LanguagePacksDownload": "下载语言包",
+  "LanguagePacksRefresh": "刷新语言列表",
+  "LanguagePackInstalled": "已安装",
+  "LanguagePackDownloading": "正在下载…",
+  "LanguagePackReady": "语言包已就绪",
+  "LanguagePackFailed": "下载失败"
+}

@@ -1,0 +1,11 @@
+{
+  "CategoryGeneral": "Allgemein",
+  "TranslationProvider": "Übersetzungsanbieter",
+  "LanguagePacks": "Sprachpakete",
+  "LanguagePacksDownload": "Sprachpaket herunterladen",
+  "LanguagePacksRefresh": "Sprachliste aktualisieren",
+  "LanguagePackInstalled": "Installiert",
+  "LanguagePackDownloading": "Wird heruntergeladen…",
+  "LanguagePackReady": "Sprachpaket bereit",
+  "LanguagePackFailed": "Download fehlgeschlagen"
+}

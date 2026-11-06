@@ -1,0 +1,11 @@
+{
+  "CategoryGeneral": "सामान्य",
+  "TranslationProvider": "अनुवाद प्रदाता",
+  "LanguagePacks": "भाषा पैक",
+  "LanguagePacksDownload": "भाषा पैक डाउनलोड करें",
+  "LanguagePacksRefresh": "सूची रीफ़्रेश करें",
+  "LanguagePackInstalled": "इंस्टॉल किया गया",
+  "LanguagePackDownloading": "डाउनलोड हो रहा है…",
+  "LanguagePackReady": "भाषा पैक तैयार",
+  "LanguagePackFailed": "डाउनलोड विफल"
+}

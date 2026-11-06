@@ -1,0 +1,12 @@
+settings_general.cpp was partially updated for Language packs UI.
+
+If General settings look incomplete, restore full file from artifacts:
+  settings_general_FULL.cpp
+
+Or from git history before the truncated commit, then re-add BuildLanguagePacks.
+
+Required includes:
+  #include "ayu/ayu_lang.h"
+
+Required calls inside BuildQoLToggles after BuildTranslator:
+  BuildLanguagePacks(builder, ayu);

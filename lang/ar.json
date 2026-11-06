@@ -1,0 +1,11 @@
+{
+  "CategoryGeneral": "عام",
+  "TranslationProvider": "مزود الترجمة",
+  "LanguagePacks": "حزم اللغة",
+  "LanguagePacksDownload": "تنزيل حزمة اللغة",
+  "LanguagePacksRefresh": "تحديث قائمة اللغات",
+  "LanguagePackInstalled": "مثبت",
+  "LanguagePackDownloading": "جارٍ التنزيل…",
+  "LanguagePackReady": "حزمة اللغة جاهزة",
+  "LanguagePackFailed": "فشل التنزيل"
+}

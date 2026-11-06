@@ -1,0 +1,11 @@
+{
+  "CategoryGeneral": "Основное",
+  "TranslationProvider": "Провайдер перевода",
+  "LanguagePacks": "Языковые пакеты",
+  "LanguagePacksDownload": "Скачать языковой пакет",
+  "LanguagePacksRefresh": "Обновить список языков",
+  "LanguagePackInstalled": "Установлен",
+  "LanguagePackDownloading": "Загрузка…",
+  "LanguagePackReady": "Пакет готов",
+  "LanguagePackFailed": "Ошибка загрузки"
+}
