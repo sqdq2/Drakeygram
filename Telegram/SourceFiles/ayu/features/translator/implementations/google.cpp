@@ -1,13 +1,13 @@
 // Drakeygram Desktop
 // Fully independent fork. No external tracking.
-// LibreTranslate backend (replaces Google). Configurable endpoint.
-// Default: http://127.0.0.1:5000 (self-hosted). Set DRAKEY_LIBRETRANSLATE_URL to override.
+// LibreTranslate backend (provider slot: Google in settings = LibreTranslate).
+// Default endpoint: http://127.0.0.1:5000 — override with DRAKEY_LIBRETRANSLATE_URL.
 
 #include "ayu/features/translator/implementations/google.h"
 
-#include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtCore/QUrl>
 #include <QtNetwork/QNetworkReply>
@@ -19,9 +19,10 @@ namespace {
 QString libreTranslateBaseUrl() {
 	const auto env = qEnvironmentVariable("DRAKEY_LIBRETRANSLATE_URL");
 	if (!env.trimmed().isEmpty()) {
-		return env.trimmed().replace(QRegularExpression(QStringLiteral("/+")), QStringLiteral("/")).remove(QRegularExpression(QStringLiteral("/$")));
+		auto u = env.trimmed();
+		while (u.endsWith(QLatin1Char('/'))) u.chop(1);
+		return u;
 	}
-	// Local self-hosted LibreTranslate by default (no third-party cloud).
 	return QStringLiteral("http://127.0.0.1:5000");
 }
 
@@ -61,12 +62,12 @@ QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 	body.insert(QStringLiteral("target"), target);
 	body.insert(QStringLiteral("format"), QStringLiteral("text"));
 
-	const auto url = libreTranslateBaseUrl() + QStringLiteral("/translate");
-	QNetworkRequest req{QUrl(url)};
+	QNetworkRequest req{QUrl(libreTranslateBaseUrl() + QStringLiteral("/translate"))};
 	req.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
 	req.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Drakeygram/1.0"));
 
-	QPointer<QNetworkReply> reply = _nam.post(req, QJsonDocument(body).toJson(QJsonDocument::Compact));
+	QPointer<QNetworkReply> reply = _nam.post(
+		req, QJsonDocument(body).toJson(QJsonDocument::Compact));
 
 	auto timer = new QTimer(reply);
 	timer->setSingleShot(true);
@@ -79,8 +80,7 @@ QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 	QObject::connect(reply, &QNetworkReply::finished, reply, [reply, onSuccess, onFail, timer] {
 		if (!reply) return;
 		timer->stop();
-		const auto guard = std::unique_ptr<QNetworkReply, void(*)(QNetworkReply*)>(
-			reply, [](QNetworkReply *r) { r->deleteLater(); });
+		reply->deleteLater();
 		if (reply->error() != QNetworkReply::NoError) {
 			if (onFail) onFail();
 			return;
