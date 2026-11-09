@@ -1,58 +1,41 @@
-# Offline translation (download only the languages you need)
+# Offline chat translation (no local server)
 
-Drakeygram does **not** ship every language model inside the app (too large).
-You download **only the languages you choose**. After that, translation works **offline**.
+## Your requirement
 
-## How it works
+- Download **any language pack you choose** (not all bundled in the app)
+- **Entire chat** translation works after packs are installed
+- **No** `127.0.0.1` / Docker LibreTranslate server
+- Packs come from an **official download endpoint**
 
-1. Install **LibreTranslate** once on your PC (local engine).
-2. Download **language packs (models)** only for languages you need.
-3. In Drakeygram: Settings → translation provider → **Offline** (shown as Offline / local).
-4. Translate messages as usual — traffic goes to `http://127.0.0.1:5000` only, not the internet.
+## Official model source
 
-## Install engine (one time)
+Machine-translation packs use **Mozilla Firefox Translations** models (same family as Firefox offline translate):
 
-### Docker (recommended)
+- Registry: https://github.com/mozilla/firefox-translations-models
+- Media base: `https://media.githubusercontent.com/media/mozilla/firefox-translations-models/main/models`
+- App catalog: `lang/mt_index.json` in this repo (lists pairs; files are pulled from Mozilla)
 
-```bash
-docker run -d --name libretranslate -p 5000:5000 libretranslate/libretranslate
-```
+## In the app
 
-Models download the first time you use a language, or pre-load:
+1. Settings → translation provider → **Offline**
+2. Download language pack(s) you need (e.g. English→Arabic)
+3. Packs store under `tdata/drakey/mt_models/`
+4. Translate message or whole chat (batch path already in the client)
 
-```bash
-docker run -d -p 5000:5000 libretranslate/libretranslate --load-only en,ar,ru
-```
+## Engine note (important)
 
-Change `en,ar,ru` to the languages **you** want.
+Downloading packs stores **official model files** on disk.  
+Running neural translation **fully inside** Telegram Desktop still requires the **Bergamot** engine (Mozilla’s C++ MT runtime) linked into the binary.
 
-### Without Docker
+| Piece | Status |
+|--------|--------|
+| Official pack catalog + download UI | Implemented (catalog + paths) |
+| Entire-chat batch API | Already in translator pipeline |
+| No LibreTranslate localhost server | Yes — removed from design |
+| In-process Bergamot inference | Requires adding `bergamot-translator` as a native dependency (next engineering milestone) |
 
-Follow: https://github.com/LibreTranslate/LibreTranslate  
-Run so it listens on `127.0.0.1:5000`.
+Until Bergamot is linked, use **Telegram** provider for reliable full-chat translate, and use Offline after packs + Bergamot integration land.
 
-## In Drakeygram
+## Why not “JSON language packs” alone?
 
-1. Start local LibreTranslate (with your chosen language models).
-2. Settings → set provider to **Offline** (Google slot = offline backend).
-3. Translate any chat/message — works without internet if the local engine has that language pair.
-
-Optional:
-
-```bash
-export DRAKEY_LIBRETRANSLATE_URL=http://127.0.0.1:5000
-```
-
-## What is NOT offline
-
-- **Telegram** provider = cloud (Telegram servers).
-- UI “Language packs” under General = interface text only, not MT models.
-
-## Summary
-
-| Step | Action |
-|------|--------|
-| Choose languages | e.g. Arabic + Russian only |
-| Download packs | LibreTranslate models for those langs |
-| App setting | Offline provider |
-| Result | Message translation offline |
+UI JSON packs only change menu text. Chat translation needs **MT models** (tens–hundreds of MB per direction), downloaded on demand from the official host above.
