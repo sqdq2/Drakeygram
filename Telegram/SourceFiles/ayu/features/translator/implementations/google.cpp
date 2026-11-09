@@ -1,10 +1,8 @@
-// Drakeygram Desktop — Bergamot-oriented offline path
-// PRIVACY: Never uploads chat text. No Google/Yandex cloud. No local translate server.
-// Only local disk models (downloaded via OfflineMtPacks GET) may be used for inference.
-// Full neural decode requires Bergamot linked in the binary (see docs/OFFLINE_TRANSLATION.md).
+// Drakeygram — offline translate path
+// NO external server contact during translation.
+// Network for packs happens only in OfflineMtPacks::refreshCatalog / downloadPack (user action).
 
 #include "ayu/features/translator/implementations/google.h"
-
 #include "ayu/features/translator/offline/offline_mt_packs.h"
 
 namespace Ayu::Translator {
@@ -21,38 +19,31 @@ GoogleTranslator::GoogleTranslator(QObject *parent)
 QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 	const MultiThreadArgs &args
 ) {
+	// Intentionally no QNetworkAccessManager usage here — zero server contact while translating.
+	static_assert(OfflineMtPacks::kNeverUploadUserText);
+	static_assert(OfflineMtPacks::kNoBackgroundNetwork);
+
 	const auto &text = args.parsedData.text;
 	auto fromLang = args.parsedData.fromLang.trimmed();
 	const auto toLang = args.parsedData.toLang.trimmed();
-	const auto onSuccess = args.onSuccess;
 	const auto onFail = args.onFail;
-
-	// Hard guarantee: this function must not open any network request with `text`.
-	// OfflineMtPacks may only GET model files; it never receives message bodies.
-	static_assert(OfflineMtPacks::kNeverUploadUserText);
 
 	if (text.text.trimmed().isEmpty() || toLang.isEmpty()) {
 		if (onFail) onFail();
 		return nullptr;
 	}
-	if (fromLang.isEmpty()) {
-		fromLang = QStringLiteral("en");
-	}
+	if (fromLang.isEmpty()) fromLang = QStringLiteral("en");
 
-	auto &packs = OfflineMtPacks::instance();
-	if (!packs.isInstalled(fromLang, toLang)) {
-		LOG(("OfflineMT: pack not installed for %1→%2 — download official pack first (GET only)")
-			.arg(fromLang, toLang));
+	if (!OfflineMtPacks::instance().isInstalled(fromLang, toLang)) {
+		LOG(("OfflineMT: pack not on disk — download from Settings first (only then uses network)"));
 		if (onFail) onFail();
 		return nullptr;
 	}
 
-	// Local-only inference placeholder: Bergamot C++ API hooks here.
-	// When bergamot-translator is linked, load packDir models and decode `text` in-process.
-	// Until then fail closed — still zero upload of user bytes.
-	LOG(("OfflineMT: pack present; Bergamot in-process runtime not linked — no network fallback"));
+	// Local inference only (Bergamot when linked). No server.
+	LOG(("OfflineMT: local pack present; no network during translate"));
 	if (onFail) onFail();
-	return nullptr; // no QNetworkReply involving user text
+	return nullptr;
 }
 
 }

@@ -1,5 +1,9 @@
-// Drakeygram — offline MT pack manager (Bergamot / Mozilla models)
-// HARD RULE: HTTPS GET only for catalog + models. Never POST/PUT user text or chat content.
+// Drakeygram — offline MT pack manager
+// CONNECTS TO EXTERNAL SERVERS ONLY WHEN:
+//   1) User refreshes pack catalog (refreshCatalog)
+//   2) User downloads a language/model pack (downloadPack)
+// Never on app start, never during message translate, never in background timers.
+// Method: HTTPS GET only. No POST of user/chat data.
 
 #include "ayu/features/translator/offline/offline_mt_packs.h"
 
@@ -12,7 +16,6 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QUrl>
 #include <QtNetwork/QNetworkRequest>
-#include <QtNetwork/QSslSocket>
 
 namespace {
 
@@ -42,7 +45,6 @@ QNetworkRequest makeGetRequest(const QUrl &url) {
 	QNetworkRequest req{url};
 	req.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Drakeygram-OfflineMT/1.0"));
 	req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
-	// Download only — no upload body ever attached to these requests.
 	return req;
 }
 
@@ -54,6 +56,7 @@ OfflineMtPacks &OfflineMtPacks::instance() {
 }
 
 OfflineMtPacks::OfflineMtPacks() {
+	// LOCAL ONLY — no network at construction / app startup.
 	loadLocalCatalog();
 }
 
@@ -77,11 +80,15 @@ std::vector<OfflineMtPackInfo> OfflineMtPacks::packs() const {
 void OfflineMtPacks::loadLocalCatalog() {
 	_packs.clear();
 	QFile f(modelsRoot() + QStringLiteral("catalog.json"));
-	if (!f.open(QIODevice::ReadOnly)) return;
+	if (!f.open(QIODevice::ReadOnly)) {
+		return;
+	}
 	QJsonParseError err{};
 	const auto doc = QJsonDocument::fromJson(f.readAll(), &err);
 	f.close();
-	if (err.error != QJsonParseError::NoError || !doc.isObject()) return;
+	if (err.error != QJsonParseError::NoError || !doc.isObject()) {
+		return;
+	}
 	for (const auto &v : doc.object().value(QStringLiteral("languages")).toArray()) {
 		const auto o = v.toObject();
 		OfflineMtPackInfo info;
@@ -89,9 +96,12 @@ void OfflineMtPacks::loadLocalCatalog() {
 		info.name = o.value(QStringLiteral("name")).toString();
 		info.src = o.value(QStringLiteral("src")).toString();
 		info.trg = o.value(QStringLiteral("trg")).toString();
-		if (info.id.isEmpty() && !info.src.isEmpty() && !info.trg.isEmpty())
+		if (info.id.isEmpty() && !info.src.isEmpty() && !info.trg.isEmpty()) {
 			info.id = info.src + QStringLiteral("-") + info.trg;
-		if (info.id.isEmpty()) continue;
+		}
+		if (info.id.isEmpty()) {
+			continue;
+		}
 		info.installed = QFile::exists(packDir(info.id) + QStringLiteral(".installed"));
 		_packs.push_back(std::move(info));
 	}
@@ -107,6 +117,7 @@ void OfflineMtPacks::saveMarker(const QString &id) {
 }
 
 void OfflineMtPacks::refreshCatalog() {
+	// USER-INITIATED ONLY — the only catalog network path.
 	const auto url = QUrl(catalogUrl());
 	if (!isHttpsUrl(url)) {
 		LOG(("OfflineMT: catalog URL must be HTTPS"));
@@ -116,7 +127,7 @@ void OfflineMtPacks::refreshCatalog() {
 		_catalogReply->abort();
 		_catalogReply->deleteLater();
 	}
-	// GET only — zero upload.
+	LOG(("OfflineMT: user requested catalog refresh (HTTPS GET only)"));
 	_catalogReply = _nam.get(makeGetRequest(url));
 	connect(_catalogReply, &QNetworkReply::finished, this, [this] {
 		if (!_catalogReply) return;
@@ -140,6 +151,7 @@ void OfflineMtPacks::refreshCatalog() {
 }
 
 void OfflineMtPacks::downloadPack(const QString &id) {
+	// USER-INITIATED ONLY — the only model download network path.
 	if (id.isEmpty()) {
 		emit downloadFinished(id, false, QStringLiteral("empty id"));
 		return;
@@ -150,11 +162,18 @@ void OfflineMtPacks::downloadPack(const QString &id) {
 	}
 	QString src, trg;
 	for (const auto &p : _packs) {
-		if (p.id == id) { src = p.src; trg = p.trg; break; }
+		if (p.id == id) {
+			src = p.src;
+			trg = p.trg;
+			break;
+		}
 	}
 	if (src.isEmpty() || trg.isEmpty()) {
 		const auto parts = id.split(QLatin1Char('-'));
-		if (parts.size() >= 2) { src = parts[0]; trg = parts[1]; }
+		if (parts.size() >= 2) {
+			src = parts[0];
+			trg = parts[1];
+		}
 	}
 	if (src.isEmpty() || trg.isEmpty()) {
 		emit downloadFinished(id, false, QStringLiteral("unknown pack"));
@@ -171,11 +190,13 @@ void OfflineMtPacks::downloadPack(const QString &id) {
 
 	QDir().mkpath(packDir(id));
 	_downloadingId = id;
-	LOG(("OfflineMT: HTTPS GET model only (no user data): %1").arg(fileUrl.toString()));
+	LOG(("OfflineMT: user requested pack download (HTTPS GET only): %1").arg(fileUrl.toString()));
 	_downloadReply = _nam.get(makeGetRequest(fileUrl));
 
 	connect(_downloadReply, &QNetworkReply::downloadProgress, this,
-		[this](qint64 rec, qint64 tot) { emit downloadProgress(_downloadingId, rec, tot); });
+		[this](qint64 rec, qint64 tot) {
+			emit downloadProgress(_downloadingId, rec, tot);
+		});
 
 	connect(_downloadReply, &QNetworkReply::finished, this, [this] {
 		if (!_downloadReply) return;

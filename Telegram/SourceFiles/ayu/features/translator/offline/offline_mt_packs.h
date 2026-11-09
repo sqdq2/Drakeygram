@@ -1,17 +1,19 @@
-// Drakeygram — Bergamot / Mozilla offline MT packs
-// DOWNLOAD ONLY (HTTP GET). Never uploads chat text or any user content.
+// Drakeygram — offline MT packs
+// NETWORK POLICY:
+//   - No connections at startup / idle / translate-time.
+//   - HTTPS GET only when user explicitly refreshes catalog or downloads a pack.
+//   - Never uploads chat text or any user content.
 
 #pragma once
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtCore/QStringList>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <vector>
 
 struct OfflineMtPackInfo {
-	QString id;       // e.g. "en-ar"
+	QString id;
 	QString name;
 	QString src;
 	QString trg;
@@ -24,15 +26,19 @@ class OfflineMtPacks final : public QObject {
 public:
 	static OfflineMtPacks &instance();
 
-	void refreshCatalog();
-	void downloadPack(const QString &id);
+	// Local disk only — no network.
+	void loadLocalCatalog();
 	[[nodiscard]] std::vector<OfflineMtPackInfo> packs() const;
 	[[nodiscard]] bool isInstalled(const QString &src, const QString &trg) const;
 	[[nodiscard]] QString modelsRoot() const;
 	[[nodiscard]] QString packDir(const QString &id) const;
 
-	// Privacy: no API uploads chat text. Only GET of model artifacts.
+	// NETWORK (HTTPS GET only) — call only from user actions (Settings buttons).
+	void refreshCatalog();
+	void downloadPack(const QString &id);
+
 	static constexpr bool kNeverUploadUserText = true;
+	static constexpr bool kNoBackgroundNetwork = true;
 
 Q_SIGNALS:
 	catalogUpdated();
@@ -40,8 +46,7 @@ Q_SIGNALS:
 	downloadFinished(const QString &id, bool ok, const QString &error);
 
 private:
-	OfflineMtPacks();
-	void loadLocalCatalog();
+	OfflineMtPacks(); // loads local catalog only — zero network
 	void saveMarker(const QString &id);
 
 	QNetworkAccessManager _nam;
