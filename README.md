@@ -2,59 +2,38 @@
 
 # Drakeygram
 
-**Independent Telegram Desktop client — privacy first**
+**Independent Telegram Desktop client — privacy first, production-oriented**
+
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/sqdq2/Drakeygram)
+[![License](https://img.shields.io/badge/license-GPL--3.0-green)](https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL)
+[![Build](https://img.shields.io/badge/build-scripts%20included-success)](https://github.com/sqdq2/Drakeygram/tree/main/scripts)
 
 </div>
 
-## Translation (works in-app, no local server)
+## Quick build (all platforms)
 
-| Provider | How |
-|----------|-----|
-| **Telegram** (default) | Official Telegram translate servers |
-| **LibreTranslate** | Public API `https://libretranslate.com` — **no install** |
-
-Optional:
+API ID + Hash: [my.telegram.org](https://my.telegram.org)
 
 ```bash
-export DRAKEY_LIBRETRANSLATE_URL=https://libretranslate.com   # default
-export DRAKEY_LIBRETRANSLATE_API_KEY=your_key                 # if instance requires it
+git clone --recursive https://github.com/sqdq2/Drakeygram.git
+cd Drakeygram
 ```
 
-Choose the non-Telegram provider in settings (wired to LibreTranslate). Batch / chat translation uses the built-in multi-message path.
+| OS | Command |
+|----|---------|
+| **Linux** | `chmod +x scripts/build-linux.sh && ./scripts/build-linux.sh` |
+| **macOS** | `chmod +x scripts/build-macos.sh && ./scripts/build-macos.sh` |
+| **Windows** | VS x64 Developer PowerShell: `powershell -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1` |
 
-## Language packs (on demand)
+Scripts only ask for **API ID** and **Hash**. Optional: `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `BUILD_TYPE`, `JOBS`, `OUT_DIR`.
 
-1. **Main UI languages** — official **Telegram** langpacks (normal desktop behavior).
-2. **Drakeygram extra strings** — downloaded **when needed** from this repo:
+## Features
 
-   `https://raw.githubusercontent.com/sqdq2/Drakeygram/main/lang/{langId}.json`
+Ghost mode · Anti-recall · Filters · Streamer mode · Language packs (Settings → General) · Telegram translate only
 
-   Cached under `tdata/drakey/languages/`. Override base URL with `DRAKEY_LANG_BASE_URL`.
+## Network
 
-Put packs in the repo `lang/` folder (e.g. `lang/en.json`).
-
-## Network policy
-
-- Telegram servers (required)
-- LibreTranslate public API (only if you use that provider)
-- This GitHub `lang/` JSON (only for extra UI strings)
-- **No** AyuGram / Google / Yandex / iTunes / dpaste
-
-## Build scripts (only ask API ID + Hash)
-
-```bash
-# Linux
-chmod +x scripts/build-linux.sh && ./scripts/build-linux.sh
-
-# macOS
-chmod +x scripts/build-macos.sh && ./scripts/build-macos.sh
-
-# Windows (VS Developer PowerShell)
-powershell -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
-```
-
-Get API ID/Hash: https://my.telegram.org  
-Deps: same as [Telegram Desktop](https://github.com/telegramdesktop/tdesktop).
+Telegram only (+ optional `lang/` packs from this repo). No AyuGram / Google / Yandex / dpaste.
 
 ## License
 
