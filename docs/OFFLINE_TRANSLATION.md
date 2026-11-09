@@ -1,41 +1,37 @@
-# Offline chat translation (no local server)
+# Offline Bergamot translation — download only, zero upload
 
-## Your requirement
+## Privacy rule
 
-- Download **any language pack you choose** (not all bundled in the app)
-- **Entire chat** translation works after packs are installed
-- **No** `127.0.0.1` / Docker LibreTranslate server
-- Packs come from an **official download endpoint**
+| Direction | Allowed |
+|-----------|---------|
+| **Download** language/model packs (HTTP **GET**) | Yes — official Mozilla model host |
+| **Upload** chat text / messages / any user content | **Never** |
+| Local LibreTranslate server `127.0.0.1` | **Not used** |
+| Google / Yandex cloud translate | **Not used** |
 
-## Official model source
+Chat text is only processed **on device**. Network is used solely to **fetch model files** the user chooses.
 
-Machine-translation packs use **Mozilla Firefox Translations** models (same family as Firefox offline translate):
+## Official download source
 
-- Registry: https://github.com/mozilla/firefox-translations-models
-- Media base: `https://media.githubusercontent.com/media/mozilla/firefox-translations-models/main/models`
-- App catalog: `lang/mt_index.json` in this repo (lists pairs; files are pulled from Mozilla)
+- Catalog: `lang/mt_index.json` (this repo) or `DRAKEY_MT_CATALOG_URL`
+- Model bytes: Mozilla Firefox Translations  
+  `https://media.githubusercontent.com/media/mozilla/firefox-translations-models/main/models`
 
-## In the app
+## User flow
 
-1. Settings → translation provider → **Offline**
-2. Download language pack(s) you need (e.g. English→Arabic)
-3. Packs store under `tdata/drakey/mt_models/`
-4. Translate message or whole chat (batch path already in the client)
+1. Settings → Offline MT → refresh catalog  
+2. Download **only** the language pairs you need (e.g. `en-ar`)  
+3. Packs stored in `tdata/drakey/mt_models/<id>/`  
+4. Translate messages / whole chat locally when Bergamot runtime is linked  
 
-## Engine note (important)
+## Code
 
-Downloading packs stores **official model files** on disk.  
-Running neural translation **fully inside** Telegram Desktop still requires the **Bergamot** engine (Mozilla’s C++ MT runtime) linked into the binary.
+- `Telegram/SourceFiles/ayu/features/translator/offline/offline_mt_packs.*` — GET catalog + GET models only  
+- Offline provider never attaches message text to a network request  
 
-| Piece | Status |
-|--------|--------|
-| Official pack catalog + download UI | Implemented (catalog + paths) |
-| Entire-chat batch API | Already in translator pipeline |
-| No LibreTranslate localhost server | Yes — removed from design |
-| In-process Bergamot inference | Requires adding `bergamot-translator` as a native dependency (next engineering milestone) |
+## Bergamot runtime
 
-Until Bergamot is linked, use **Telegram** provider for reliable full-chat translate, and use Offline after packs + Bergamot integration land.
+In-process decoding uses [bergamot-translator](https://github.com/browsermt/bergamot-translator) (Mozilla/Browser MT).  
+Linking that library into the Telegram Desktop CMake graph is the remaining native step so downloaded packs actually decode text offline.
 
-## Why not “JSON language packs” alone?
-
-UI JSON packs only change menu text. Chat translation needs **MT models** (tens–hundreds of MB per direction), downloaded on demand from the official host above.
+Until it is linked: packs still **download only**; translate fails closed **without uploading** anything.
