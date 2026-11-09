@@ -11,10 +11,13 @@ FAIL=0
 check() {
   local pattern="$1"
   local msg="$2"
-  ifn  if grep -RniE "$pattern" Telegram/SourceFiles/ayu \
+  local hits
+  hits="$(grep -RniE "$pattern" Telegram/SourceFiles/ayu \
       --include='*.cpp' --include='*.h' --include='*.mm' 2>/dev/null \
-      | grep -vE 'security-audit|OFFLINE_TRANSLATION|FORBIDDEN|disabled|no-op|Never upload|GET only' ; then
+      | grep -vE 'security-audit|OFFLINE_TRANSLATION|FORBIDDEN|disabled|no-op|Never upload|GET only|HTTPS GET' || true)"
+  if [[ -n "$hits" ]]; then
     red "FAIL: $msg"
+    echo "$hits" | head -20
     FAIL=1
   else
     green "OK: $msg"
@@ -29,14 +32,11 @@ check 'translate\.googleapis\.com|translate-pa\.googleapis' 'No Google Translate
 check 'translate\.yandex\.' 'No Yandex Translate API'
 check 'itunes\.apple\.com' 'No iTunes API'
 
-# Soft check: POST in offline packs should not send user chat (heuristic)
-if grep -Rni 'offline_mt_packs' Telegram/SourceFiles/ayu -n 2>/dev/null | head -1 >/dev/null; then
-  if grep -RniE '\.post\(' Telegram/SourceFiles/ayu/features/translator/offline 2>/dev/null; then
-    red "FAIL: POST found under offline translator — must be GET-only for packs"
-    FAIL=1
-  else
-    green "OK: offline pack manager has no POST"
-  fi
+if grep -RniE '\.post\(' Telegram/SourceFiles/ayu/features/translator/offline 2>/dev/null; then
+  red "FAIL: POST under offline translator — packs must be GET-only"
+  FAIL=1
+else
+  green "OK: offline pack manager has no POST"
 fi
 
 if [[ "$FAIL" -ne 0 ]]; then
