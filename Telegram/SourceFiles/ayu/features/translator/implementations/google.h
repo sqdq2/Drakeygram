@@ -1,5 +1,6 @@
 // Drakeygram Desktop
-// Fully independent fork. No external tracking.
+// Offline translator backend (local LibreTranslate only).
+// Class name kept for existing provider wiring (TranslationProvider::Google → Offline).
 
 #pragma once
 
@@ -9,6 +10,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QSet>
 #include <QtCore/QString>
+#include <QtNetwork/QNetworkAccessManager>
 
 namespace Ayu::Translator {
 
@@ -19,12 +21,15 @@ class GoogleTranslator final : public MultiThreadTranslator
 public:
 	static GoogleTranslator &instance();
 
-	// all languages
 	[[nodiscard]] QSet<QString> supportedLanguages() const override { return {}; }
 
 	[[nodiscard]] QPointer<QNetworkReply> startSingleTranslation(
 		const MultiThreadArgs &args
 	) override;
+
+	[[nodiscard]] int getConcurrencyLimit() const override { return 4; }
+	[[nodiscard]] int getMaxRetries() const override { return 1; }
+	[[nodiscard]] int getBaseWaitTimeMs() const override { return 200; }
 
 private:
 	explicit GoogleTranslator(QObject *parent = nullptr);
