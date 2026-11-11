@@ -17,8 +17,6 @@
 #include <QtCore/QString>
 #include <QtNetwork/QNetworkReply>
 
-// todo: expose available languages from current translator and use in `ChooseTranslateToBox`
-
 namespace Ayu::Translator {
 namespace {
 
@@ -133,7 +131,7 @@ mtpRequestId TranslateManager::performTranslation(Builder &req) {
 				if (const auto message = req.session()->data().message(peerData->id, msgId)) {
 					const auto textWithEntities = message->originalText();
 					texts.push_back(textWithEntities);
-					const auto key = generateMessageCacheKey(peerData->idData->id, msgId, fromLang, toLang);
+					const auto key = generateMessageCacheKey(peerData->id, msgId, fromLang, toLang);
 					cacheKeys.push_back(key);
 					if (const auto cached = getFromCache(key)) {
 						resultTexts.push_back(cached->translatedText);
