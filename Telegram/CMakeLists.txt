@@ -237,6 +237,12 @@ set(drakeygram_files
         ayu/features/translator/html_parser.h
         ayu/features/translator/implementations/google.cpp
         ayu/features/translator/implementations/google.h
+        ayu/features/translator/offline/offline_mt_packs.cpp
+        ayu/features/translator/offline/offline_mt_packs.h
+        ayu/features/translator/offline/offline_mt_engine.cpp
+        ayu/features/translator/offline/offline_mt_engine.h
+        ayu/security/session_guard.cpp
+        ayu/security/session_guard.h
         ayu/features/translator/implementations/yandex.cpp
         ayu/features/translator/implementations/yandex.h
         ayu/features/translator/implementations/base.cpp
