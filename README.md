@@ -1,53 +1,78 @@
-<div align="center">
-
 # Drakeygram
 
-**Independent Telegram Desktop client — production scripts on `dev`**
+Independent Telegram Desktop client (fork lineage cleaned of AyuGram trackers).
 
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/sqdq2/Drakeygram)
-[![License](https://img.shields.io/badge/license-GPL--3.0-green)](https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL)
+**Privacy-first. Feature-complete. Production scripts included.**
 
-</div>
+## Highlights
 
-## Production build
+- Full Telegram Desktop capability (messaging, multi-account, multi-device sessions)
+- Fork trackers / remote config phone-home **disabled**
+- Cloud Google/Yandex translate sinks **disabled**; Telegram translate remains available
+- **Offline translation (Option 1 lightweight):** engine ships with the app; language packs from official Mozilla sources on demand; chat text never uploaded
+- **SessionGuard:** device-bound local seal + Telegram local passcode recommended
+- Filters: local only (no dpaste / no URL import)
+- Upstream sync script for official Telegram Desktop updates
+
+## Build (API ID + Hash only)
 
 ```bash
 git clone --recursive https://github.com/sqdq2/Drakeygram.git
-cd Drakeygram && git checkout dev
-chmod +x scripts/*.sh
-bash scripts/production-ready.sh    # gate: sizes, security, cmake
-./scripts/build-linux.sh            # or build-macos.sh / build-windows.ps1
+cd Drakeygram
+git checkout dev
+bash scripts/apply-all-cmake-extras.sh
+bash scripts/production-ready.sh
+
+# Linux
+./scripts/build-linux.sh
+
+# macOS
+./scripts/build-macos.sh
+
+# Windows (PowerShell)
+./scripts/build-windows.ps1
 ```
 
-API ID + Hash: [my.telegram.org](https://my.telegram.org)
+Scripts prompt for **API ID** and **API Hash** (from https://my.telegram.org).
 
-Full guide: **[PRODUCTION_BUILD.md](PRODUCTION_BUILD.md)**
+### Optional offline engine in the package
+
+```bash
+export DRAKEY_OFFLINE_ENGINE_BIN=/path/to/stripped/bergamot-translator
+bash scripts/bundle-offline-engine.sh /path/to/install/prefix
+```
+
+Users do **not** run this — only release packaging.
+
+## Scripts
 
 | Script | Purpose |
 |--------|--------|
-| `scripts/production-ready.sh` | Pre-build gate |
-| `scripts/build-linux.sh` | Linux Release build |
+| `scripts/build-linux.sh` | Linux optimized Release build |
 | `scripts/build-macos.sh` | macOS Release build |
 | `scripts/build-windows.ps1` | Windows Release build |
-| `scripts/sync-upstream-telegram.sh` | Merge official Telegram Desktop |
-| `scripts/security-audit.sh` | Forbidden endpoint scan |
+| `scripts/production-ready.sh` | Gate: sizes, sinks, cmake extras |
+| `scripts/security-audit.sh` | Forbidden network sink scan |
+| `scripts/sync-upstream-telegram.sh` | Merge official tdesktop |
+| `scripts/apply-all-cmake-extras.sh` | Offline MT + SessionGuard sources |
+| `scripts/bundle-offline-engine.sh` | Maintainer: ship engine with app |
 
-## Security
+## Docs
 
-- No AyuGram remote config / trackers
-- No Google/Yandex cloud translate
-- Offline MT packs: **HTTPS GET only** — never uploads chat text
-- Filters: no dpaste publish
-- Details: [SECURITY.md](SECURITY.md)
+- [OPTIMIZATION.md](OPTIMIZATION.md) — safe optimization rules (no feature cuts)
+- [docs/FEATURE_MATRIX.md](docs/FEATURE_MATRIX.md)
+- [docs/OFFLINE_TRANSLATION.md](docs/OFFLINE_TRANSLATION.md)
+- [docs/SESSION_PROTECTION.md](docs/SESSION_PROTECTION.md)
+- [docs/NETWORK_POLICY.md](docs/NETWORK_POLICY.md)
+- [PRODUCTION_BUILD.md](PRODUCTION_BUILD.md)
+- [SECURITY.md](SECURITY.md)
 
-## Update from official Telegram
+## Network policy (short)
 
-```bash
-bash scripts/sync-upstream-telegram.sh
-bash scripts/security-audit.sh
-# rebuild
-```
+1. **Telegram servers** — normal client traffic  
+2. **Mozilla pack hosts** — only when the user downloads offline language packs  
+3. **Nothing else** for fork features (no AyuGram, dpaste, Google/Yandex translate APIs)
 
 ## License
 
-GPL-3.0 family. Not affiliated with Telegram FZ-LLC.
+Same family as Telegram Desktop / GPLv3 for corresponding sources. Respect upstream licenses and third-party notices.

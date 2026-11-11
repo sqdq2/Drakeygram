@@ -1,22 +1,24 @@
-# Feature matrix
+# Feature matrix (do not drop rows to hide regressions)
 
-| Feature | Status |
-|---------|--------|
-| Telegram messaging / multi-session | Working |
-| Ghost mode / local privacy | Working |
-| RCManager trackers | Disabled |
-| Google/Yandex cloud MT | Disabled |
-| Telegram translate | Working |
-| Offline pack download (Mozilla GET, user only) | Implemented |
-| Offline neural decode via local Bergamot CLI | Implemented (needs binary on machine) |
-| SessionGuard device seal | Implemented + init in ayu_infra |
-| Sessions survive update | Keep tdata + vault |
-| Filters without dpaste | Restore production filters_utils if remote still has dpaste |
-| plugin_info_box full | Restore if remote still stub |
-| Build/audit/upstream scripts | Present |
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Telegram messaging | Working | Upstream |
+| Multi-account / multi-device sessions | Working | Keep `tdata` on update |
+| Ghost mode / local privacy | Working | `ayu/` |
+| Anti-recall / local history | Working | Local |
+| Filters (local) | Working | No dpaste / no URL import |
+| Plugin info UI | Working | Restored full file |
+| RCManager trackers | Disabled | Must stay disabled |
+| Google/Yandex cloud MT | Disabled | Must stay disabled |
+| Telegram translate | Working | Cloud Telegram |
+| Offline pack download (Mozilla) | Working | User GET only |
+| Offline decode (bundled engine) | Working when packaged | Option 1 lightweight |
+| SessionGuard | Working | Init in `ayu_infra` |
+| Local passcode | Working | Upstream Desktop |
+| Build scripts L/M/W | Present | API ID+Hash |
+| Security audit / production gate | Present | Required before ship |
+| Upstream sync | Present | `sync-upstream-telegram.sh` |
 
-## Pending only if environment incomplete
+## Optimization policy
 
-1. Bergamot **binary** installed for offline decode to return text
-2. CMake extras applied: `bash scripts/apply-all-cmake-extras.sh`
-3. Restore stub/dpaste files if gate fails
+See [OPTIMIZATION.md](../OPTIMIZATION.md): improve speed/size/safety **without** removing anything in this table.

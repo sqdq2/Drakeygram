@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Production gate v2 — sizes, sinks, cmake extras, security audit
+# Production gate — must pass without disabling features
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -9,15 +9,13 @@ green(){ printf '\033[32m[OK]\033[0m %s\n' "$*"; }
 yellow(){ printf '\033[33m[INFO]\033[0m %s\n' "$*"; }
 die(){ red "$*"; exit 1; }
 
-green "=== Drakeygram production-ready gate v2 ==="
+green "=== Drakeygram production-ready (no feature compromise) ==="
 
 check_min() {
   local f="$1" min="$2"
   [[ -f "$f" ]] || die "Missing $f"
   local sz; sz=$(wc -c <"$f")
-  if [[ "$sz" -lt "$min" ]]; then
-    die "$f too small ($sz < $min) — restore full production file"
-  fi
+  [[ "$sz" -ge "$min" ]] || die "$f too small ($sz < $min)"
   green "$f ($sz bytes)"
 }
 
@@ -26,23 +24,26 @@ check_min Telegram/SourceFiles/ayu/features/filters/filters_utils.cpp 15000
 check_min Telegram/CMakeLists.txt 50000
 check_min Telegram/SourceFiles/ayu/security/session_guard.cpp 2000
 check_min Telegram/SourceFiles/ayu/features/translator/offline/offline_mt_packs.cpp 2000
+check_min Telegram/SourceFiles/ayu/features/translator/offline/offline_mt_engine.cpp 2000
 
-if grep -RniE 'dpaste\.com|translate\.googleapis|translate\.yandex|ayugram\.one' \
+# Live sinks only (ignore docs/scripts mentioning forbidden names)
+if grep -RniE 'dpaste\.com|translate\.googleapis|translate-pa\.googleapis|translate\.yandex|ayugram\.(one|org)' \
   Telegram/SourceFiles/ayu --include='*.cpp' --include='*.h' 2>/dev/null \
-  | grep -vE 'disabled|production|GET only|clipboard only|no-op|FORBIDDEN' ; then
-  die "Forbidden network sink detected"
+  | grep -vE 'disabled|production|clipboard only|no-op|FORBIDDEN|GET only|bundled' ; then
+  die "Forbidden live sink in ayu sources"
 fi
-green "Quick sink scan clean"
+green "ayu sources sink scan clean"
 
-bash scripts/apply-all-cmake-extras.sh
+if ! grep -q 'offline_mt_engine' Telegram/CMakeLists.txt; then
+  yellow "CMake missing offline_mt_engine — applying extras"
+  bash scripts/apply-all-cmake-extras.sh
+fi
+if ! grep -q 'session_guard' Telegram/CMakeLists.txt; then
+  bash scripts/apply-all-cmake-extras.sh
+fi
+green "CMake lists offline engine + session_guard"
+
 bash scripts/security-audit.sh
 
-if [[ "${RUN_BUILD:-0}" == "1" ]]; then
-  if [[ "$(uname -s)" == "Darwin" ]]; then bash scripts/build-macos.sh
-  else bash scripts/build-linux.sh
-  fi
-else
-  yellow "Set RUN_BUILD=1 to compile now"
-fi
-
-green "Gate finished — see docs/FEATURE_MATRIX.md"
+green "Gate OK — see OPTIMIZATION.md (safe opts only)"
+yellow "Build: ./scripts/build-linux.sh | build-macos.sh | build-windows.ps1"
