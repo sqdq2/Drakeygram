@@ -1,9 +1,8 @@
-// Drakeygram — in-app offline MT engine (no external setup required)
-// Downloads engine binary into tdata once (HTTPS GET), then decodes locally.
+// Drakeygram — Option 1 (lightweight): engine ships with the app package.
+// No runtime engine download. No user scripts. Models still from Mozilla on demand.
 
 #pragma once
 
-#include <QtCore/QObject>
 #include <QtCore/QString>
 
 namespace Ayu::Translator {
@@ -14,13 +13,10 @@ struct OfflineDecodeResult {
 	QString error;
 };
 
-class OfflineMtEngine final : public QObject {
-	Q_OBJECT
-
+class OfflineMtEngine final {
 public:
 	static OfflineMtEngine &Instance();
 
-	// Pure local decode after engine + pack are on disk.
 	[[nodiscard]] OfflineDecodeResult decode(
 		const QString &text,
 		const QString &fromLang,
@@ -29,26 +25,17 @@ public:
 	[[nodiscard]] bool hasPack(const QString &fromLang, const QString &toLang) const;
 	[[nodiscard]] QString packDir(const QString &fromLang, const QString &toLang) const;
 
-	// Engine binary under tdata (auto-managed).
-	[[nodiscard]] QString engineDir() const;
+	// Bundled next to the executable (preferred) or already present under tdata.
+	[[nodiscard]] QString bundledEnginePath() const;
 	[[nodiscard]] QString engineBinaryPath() const;
-	[[nodiscard]] bool engineInstalled() const;
+	[[nodiscard]] bool engineAvailable() const;
 
-	// In-app install: HTTPS GET only, no user scripts/env.
-	void ensureEngineInstalled();
-
-Q_SIGNALS:
-	engineInstallProgress(qint64 received, qint64 total);
-	engineInstallFinished(bool ok, const QString &error);
+	// Idempotent: ensure tdata has a copy of the bundled engine (local file copy only).
+	bool ensureBundledEngineReady() const;
 
 private:
-	OfflineMtEngine();
-	[[nodiscard]] QString findLocalEngine() const;
-	void startEngineDownload();
-
-	class QNetworkAccessManager *_nam = nullptr;
-	class QNetworkReply *_reply = nullptr;
-	bool _installing = false;
+	OfflineMtEngine() = default;
+	[[nodiscard]] QString findEngine() const;
 };
 
 } // namespace Ayu::Translator

@@ -1,47 +1,20 @@
-// In-app offline engine: install + decode without scripts or env vars.
-// Network: HTTPS GET of engine binary only (user-triggered / first offline use).
-// Chat text never uploaded.
+// Option 1 lightweight: use engine shipped beside the app. Never download engine at runtime.
+// Language packs remain official Mozilla GET (user-triggered). Chat text never leaves device.
 
 #include "ayu/features/translator/offline/offline_mt_engine.h"
 #include "ayu/features/translator/offline/offline_mt_packs.h"
 
 #include "storage/localstorage.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QProcess>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryFile>
-#include <QtCore/QSysInfo>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtNetwork/QNetworkRequest>
 
 namespace Ayu::Translator {
 namespace {
-
-// Official-ish release asset base (override with DRAKEY_ENGINE_URL if needed).
-// Default: user can also drop a binary manually into engineDir(); app prefers tdata copy.
-QString defaultEngineUrl() {
-	const auto env = qEnvironmentVariable("DRAKEY_ENGINE_URL").trimmed();
-	if (!env.isEmpty()) {
-		return env;
-	}
-	// Placeholder catalog entry — real builds should point at your published engine asset.
-	// Layout: one executable per OS. Until a binary is published, install reports a clear error
-	// and Telegram translate remains available.
-#if defined(Q_OS_WIN)
-	return QStringLiteral(
-		"https://github.com/sqdq2/Drakeygram/releases/download/engine-v1/bergamot-translator-windows-x64.exe");
-#elif defined(Q_OS_MAC)
-	return QStringLiteral(
-		"https://github.com/sqdq2/Drakeygram/releases/download/engine-v1/bergamot-translator-macos");
-#else
-	return QStringLiteral(
-		"https://github.com/sqdq2/Drakeygram/releases/download/engine-v1/bergamot-translator-linux-x64");
-#endif
-}
 
 QString engineFileName() {
 #if defined(Q_OS_WIN)
@@ -51,6 +24,11 @@ QString engineFileName() {
 #endif
 }
 
+bool looksLikeEngine(const QString &path) {
+	const QFileInfo fi(path);
+	return fi.exists() && fi.isFile() && fi.size() > 1024;
+}
+
 } // namespace
 
 OfflineMtEngine &OfflineMtEngine::Instance() {
@@ -58,36 +36,75 @@ OfflineMtEngine &OfflineMtEngine::Instance() {
 	return eng;
 }
 
-OfflineMtEngine::OfflineMtEngine()
-: _nam(new QNetworkAccessManager(this)) {
-}
-
-QString OfflineMtEngine::engineDir() const {
-	return cWorkingDir() + QStringLiteral("tdata/drakey/engine/");
+QString OfflineMtEngine::bundledEnginePath() const {
+	// Lightweight layout: <appDir>/offline-engine/bergamot-translator[.exe]
+	const auto appDir = QCoreApplication::applicationDirPath();
+	const auto primary = appDir
+		+ QStringLiteral("/offline-engine/")
+		+ engineFileName();
+	if (looksLikeEngine(primary)) {
+		return primary;
+	}
+#ifdef Q_OS_MAC
+	// App bundle Resources
+	const auto res = appDir
+		+ QStringLiteral("/../Resources/offline-engine/")
+		+ engineFileName();
+	if (looksLikeEngine(res)) {
+		return QFileInfo(res).absoluteFilePath();
+	}
+#endif
+	return primary; // expected install path even if missing
 }
 
 QString OfflineMtEngine::engineBinaryPath() const {
-	return engineDir() + engineFileName();
+	return cWorkingDir()
+		+ QStringLiteral("tdata/drakey/engine/")
+		+ engineFileName();
 }
 
-bool OfflineMtEngine::engineInstalled() const {
-	return QFileInfo::exists(engineBinaryPath())
-		&& QFileInfo(engineBinaryPath()).isFile()
-		&& QFileInfo(engineBinaryPath()).size() > 1024;
-}
-
-QString OfflineMtEngine::findLocalEngine() const {
-	if (engineInstalled()) {
+QString OfflineMtEngine::findEngine() const {
+	// 1) Already under tdata (copied from bundle once)
+	if (looksLikeEngine(engineBinaryPath())) {
 		return engineBinaryPath();
 	}
-	// Still accept a pre-placed binary without env vars.
-	const auto fallback = cWorkingDir()
-		+ QStringLiteral("DrakeygramBergamot/")
-		+ engineFileName();
-	if (QFileInfo::exists(fallback)) {
-		return fallback;
+	// 2) Shipped with the application package
+	const auto bundled = bundledEnginePath();
+	if (looksLikeEngine(bundled)) {
+		return bundled;
 	}
 	return {};
+}
+
+bool OfflineMtEngine::engineAvailable() const {
+	return !findEngine().isEmpty();
+}
+
+bool OfflineMtEngine::ensureBundledEngineReady() const {
+	if (looksLikeEngine(engineBinaryPath())) {
+		return true;
+	}
+	const auto bundled = bundledEnginePath();
+	if (!looksLikeEngine(bundled)) {
+		LOG(("OfflineMT: no bundled engine at %1").arg(bundled));
+		return false;
+	}
+	// Local copy only — no network.
+	QDir().mkpath(QFileInfo(engineBinaryPath()).absolutePath());
+	QFile::remove(engineBinaryPath());
+	if (!QFile::copy(bundled, engineBinaryPath())) {
+		LOG(("OfflineMT: failed to copy bundled engine"));
+		return false;
+	}
+#ifndef Q_OS_WIN
+	QFile::setPermissions(
+		engineBinaryPath(),
+		QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner
+			| QFileDevice::ReadGroup | QFileDevice::ExeGroup
+			| QFileDevice::ReadOther | QFileDevice::ExeOther);
+#endif
+	LOG(("OfflineMT: bundled engine ready at %1").arg(engineBinaryPath()));
+	return true;
 }
 
 QString OfflineMtEngine::packDir(const QString &fromLang, const QString &toLang) const {
@@ -96,81 +113,6 @@ QString OfflineMtEngine::packDir(const QString &fromLang, const QString &toLang)
 
 bool OfflineMtEngine::hasPack(const QString &fromLang, const QString &toLang) const {
 	return OfflineMtPacks::instance().isInstalled(fromLang, toLang);
-}
-
-void OfflineMtEngine::ensureEngineInstalled() {
-	if (engineInstalled()) {
-		emit engineInstallFinished(true, QString());
-		return;
-	}
-	if (_installing) {
-		return;
-	}
-	startEngineDownload();
-}
-
-void OfflineMtEngine::startEngineDownload() {
-	const auto url = QUrl(defaultEngineUrl());
-	if (url.scheme() != QStringLiteral("https")) {
-		emit engineInstallFinished(false, QStringLiteral("Engine URL must be HTTPS"));
-		return;
-	}
-	_installing = true;
-	QDir().mkpath(engineDir());
-
-	QNetworkRequest req{url};
-	req.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Drakeygram-Engine/1.0"));
-	req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
-
-	LOG(("OfflineMT: in-app engine GET %1").arg(url.toString()));
-	_reply = _nam->get(req);
-
-	connect(_reply, &QNetworkReply::downloadProgress, this, [this](qint64 a, qint64 b) {
-		emit engineInstallProgress(a, b);
-	});
-
-	connect(_reply, &QNetworkReply::finished, this, [this] {
-		_installing = false;
-		if (!_reply) {
-			return;
-		}
-		const auto reply = _reply;
-		_reply = nullptr;
-		reply->deleteLater();
-
-		if (reply->error() != QNetworkReply::NoError) {
-			const auto err = reply->errorString();
-			LOG(("OfflineMT: engine download failed: %1").arg(err));
-			emit engineInstallFinished(
-				false,
-				QStringLiteral(
-					"Could not download offline engine yet. "
-					"Publish engine-v1 assets on GitHub Releases, or place bergamot-translator in tdata/drakey/engine/."));
-			return;
-		}
-		const auto data = reply->readAll();
-		if (data.size() < 1024) {
-			emit engineInstallFinished(false, QStringLiteral("Engine download too small"));
-			return;
-		}
-		const auto path = engineBinaryPath();
-		QFile f(path);
-		if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-			emit engineInstallFinished(false, QStringLiteral("Cannot write engine"));
-			return;
-		}
-		f.write(data);
-		f.close();
-#ifndef Q_OS_WIN
-		QFile::setPermissions(
-			path,
-			QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner
-				| QFileDevice::ReadGroup | QFileDevice::ExeGroup
-				| QFileDevice::ReadOther | QFileDevice::ExeOther);
-#endif
-		LOG(("OfflineMT: engine installed at %1 (%2 bytes)").arg(path).arg(data.size()));
-		emit engineInstallFinished(true, QString());
-	});
 }
 
 OfflineDecodeResult OfflineMtEngine::decode(
@@ -193,11 +135,13 @@ OfflineDecodeResult OfflineMtEngine::decode(
 		return r;
 	}
 
-	auto bin = findLocalEngine();
+	// Prefer running the bundled/copied engine — never download.
+	ensureBundledEngineReady();
+	const auto bin = findEngine();
 	if (bin.isEmpty()) {
 		r.error = QStringLiteral(
-			"Offline engine not installed yet. Open Settings → Install offline engine "
-			"(one-time in-app download).");
+			"Offline engine not shipped with this build. "
+			"Rebuild with scripts/bundle-offline-engine.sh (maintainer).");
 		return r;
 	}
 

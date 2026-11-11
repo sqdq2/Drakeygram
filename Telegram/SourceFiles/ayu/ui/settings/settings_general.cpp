@@ -1,4 +1,4 @@
-// Drakeygram settings — translation + in-app offline engine
+// Drakeygram settings — Option 1 offline (bundled engine)
 
 #include "ayu/ui/settings/settings_general.h"
 
@@ -10,11 +10,8 @@
 #include "lang/lang_keys.h"
 #include "settings/settings_common.h"
 #include "styles/style_settings.h"
-#include "ui/widgets/buttons.h"
 #include "ui/widgets/labels.h"
-#include "ui/wrap/vertical_layout.h"
 #include "ui/toast/toast.h"
-#include "boxes/abstract_box.h"
 #include "platform/platform_translate_provider.h"
 
 namespace Settings {
@@ -25,7 +22,7 @@ void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 
 	const auto items = std::vector{
 		std::pair(TranslationProvider::Telegram, QString("Telegram")),
-		std::pair(TranslationProvider::Google, QString("Offline (in-app)")),
+		std::pair(TranslationProvider::Google, QString("Offline (bundled engine)")),
 	};
 
 	for (const auto &[provider, title] : items) {
@@ -39,56 +36,44 @@ void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 				s.set_translationProvider(provider);
 				s.save();
 				if (provider == TranslationProvider::Google) {
-					// Prepare engine in background — no terminal/scripts.
-					Ayu::Translator::OfflineMtEngine::Instance().ensureEngineInstalled();
+					Ayu::Translator::OfflineMtEngine::Instance().ensureBundledEngineReady();
 				}
 			},
 		});
 	}
 
+	const auto engOk = Ayu::Translator::OfflineMtEngine::Instance().engineAvailable();
 	ayu.add(builder, {
-		.title = rpl::single(QString("Install offline engine")),
-		.label = rpl::single(QString("One-time in-app download (HTTPS)")),
+		.title = rpl::single(
+			engOk
+				? QString("Offline engine: ready (bundled)")
+				: QString("Offline engine: not in this build")),
+		.label = rpl::single(QString("Engine ships with the app — no download")),
 		.callback = [=](bool) {
-			auto &eng = Ayu::Translator::OfflineMtEngine::Instance();
-			if (eng.engineInstalled()) {
-				Ui::Toast::Show(rpl::single(QString("Offline engine already installed")));
-				return;
+			auto &e = Ayu::Translator::OfflineMtEngine::Instance();
+			if (e.ensureBundledEngineReady()) {
+				Ui::Toast::Show(rpl::single(QString("Offline engine ready")));
+			} else {
+				Ui::Toast::Show(rpl::single(QString(
+					"This build has no bundled engine. Maintainer: scripts/bundle-offline-engine.sh")));
 			}
-			Ui::Toast::Show(rpl::single(QString("Downloading offline engine…")));
-			QObject::connect(
-				&eng,
-				&Ayu::Translator::OfflineMtEngine::engineInstallFinished,
-				builder.widget(),
-				[=](bool ok, const QString &error) {
-					if (ok) {
-						Ui::Toast::Show(rpl::single(QString("Offline engine ready")));
-					} else {
-						Ui::Toast::Show(rpl::single(
-							error.isEmpty()
-								? QString("Engine install failed")
-								: error));
-					}
-				},
-				static_cast<Qt::ConnectionType>(Qt::UniqueConnection));
-			eng.ensureEngineInstalled();
 		},
 	});
 
 	ayu.add(builder, {
-		.title = rpl::single(QString("Refresh offline pack list")),
+		.title = rpl::single(QString("Refresh offline pack catalog")),
 		.callback = [=](bool) {
 			Ayu::Translator::OfflineMtPacks::instance().refreshCatalog();
-			Ui::Toast::Show(rpl::single(QString("Refreshing pack catalog…")));
+			Ui::Toast::Show(rpl::single(QString("Refreshing pack list…")));
 		},
 	});
 
 	builder.add(object_ptr<Ui::FlatLabel>(
 		builder.widget(),
 		rpl::single(QString(
-			"Offline mode runs entirely in the app: download engine once, "
-			download language packs as needed. No terminal setup. "
-			"Chat text is never uploaded.")),
+			"Lightweight Option 1: translation engine is part of the app package. "
+			"Only language packs download from official Mozilla sources when you ask. "
+			"Chat text never leaves the device.")),
 		st::boxDividerLabel));
 }
 

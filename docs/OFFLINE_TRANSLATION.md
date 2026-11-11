@@ -1,35 +1,42 @@
-# Offline translation — fully in-app
+# Offline translation — Option 1 (lightweight)
 
-No terminal scripts or environment variables required for normal use.
+## Design
+
+| Piece | Source | When |
+|-------|--------|------|
+| **Engine** | Shipped **with the app** under `offline-engine/` | Install/update app |
+| **Language packs** | Official Mozilla / Firefox models | User downloads in Settings |
+
+No runtime engine download. No terminal setup for users. Chat text never uploaded.
+
+## Why not link full Bergamot into Telegram?
+
+Full Marian/Bergamot **in-process** needs MKL/OpenBLAS and a large binary (build ~30+ minutes). That fights a **lightweight** client.
+
+Lightweight Option 1 = ship a **small stripped CLI** next to the app and run it only when translating offline. Models stay on-demand.
+
+## Maintainer (once per release)
+
+```bash
+# build or obtain a Release bergamot-translator, then:
+export DRAKEY_OFFLINE_ENGINE_BIN=/path/to/bergamot-translator
+bash scripts/bundle-offline-engine.sh /path/to/app/install/prefix
+```
+
+App layout:
+
+```text
+Drakeygram
+offline-engine/bergamot-translator   # or .exe on Windows
+```
 
 ## User flow
 
-1. Settings → **Offline (in-app)**
-2. Tap **Install offline engine** (one-time HTTPS download into `tdata/drakey/engine/`)
-3. Download language packs you need (Mozilla models, HTTPS GET)
-4. Translate chats — runs locally; chat text is never uploaded
+1. Install Drakeygram (engine already inside the package)
+2. Settings → Offline (bundled engine)
+3. Download only the language packs you need
+4. Translate — local only
 
-## What the app stores
+## Status in Settings
 
-| Path | Content |
-|------|--------|
-| `tdata/drakey/engine/` | Offline engine binary |
-| `tdata/drakey/mt_models/` | Language/model packs |
-
-## Engine release assets
-
-The app downloads from:
-
-```text
-https://github.com/sqdq2/Drakeygram/releases/download/engine-v1/bergamot-translator-<platform>
-```
-
-Publish those assets under GitHub Release tag **`engine-v1`** (linux-x64 / macos / windows-x64.exe).
-
-Until the release exists, install shows an error toast; place a binary manually at `tdata/drakey/engine/bergamot-translator` if needed.
-
-## Privacy
-
-- Engine + packs: GET only when user installs/downloads
-- No Google/Yandex/LibreTranslate cloud for offline path
-- No local server
+Shows **Offline engine: ready (bundled)** when the binary is present next to the app.
