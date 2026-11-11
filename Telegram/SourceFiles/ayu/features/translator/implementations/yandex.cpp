@@ -1,5 +1,4 @@
-// Drakeygram Desktop — production
-// Third-party online translate disabled. Use Telegram official translate.
+// Yandex cloud translate permanently removed. Hard fail only.
 
 #include "ayu/features/translator/implementations/yandex.h"
 
@@ -11,7 +10,7 @@ YandexTranslator &YandexTranslator::instance() {
 }
 
 YandexTranslator::YandexTranslator(QObject *parent)
-	: MultiThreadTranslator(parent) {
+: MultiThreadTranslator(parent) {
 }
 
 QSet<QString> YandexTranslator::supportedLanguages() const {
@@ -21,10 +20,12 @@ QSet<QString> YandexTranslator::supportedLanguages() const {
 QPointer<QNetworkReply> YandexTranslator::startSingleTranslation(
 	const MultiThreadArgs &args
 ) {
+	// Permanently removed — no Yandex endpoints, no network.
+	LOG(("YandexTranslator: removed from Drakeygram"));
 	if (args.onFail) {
 		args.onFail();
 	}
 	return nullptr;
 }
 
-}
+} // namespace Ayu::Translator

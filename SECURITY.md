@@ -1,52 +1,25 @@
-# Drakeygram security controls
+# Security / privacy
 
-## Objectives
+## Removed
 
-- No third-party tracking endpoints
-- No upload of chat text for translation or analytics
-- Model/language packs: **HTTPS GET only**
-- Stay mergeable with official Telegram Desktop for protocol/security fixes
+- Third-party trackers / remote config phone-home
+- Google Translate API usage
+- Yandex Translate API usage
+- dpaste filter publish and arbitrary URL filter import
 
-## Network policy (enforced in fork code)
+## Allowed network
 
-| Direction | Rule |
-|-----------|------|
-| Telegram DCs | Allowed (core client) |
-| Pack/catalog download | **HTTPS GET only** |
-| Chat text to Google/Yandex/LibreTranslate cloud | **Forbidden** |
-| AyuGram / exteragram / remote config | **Forbidden** |
-| dpaste / arbitrary filter URL publish | **Forbidden** |
+1. Telegram infrastructure (normal client)
+2. Official Mozilla/Firefox model hosts — only when the user downloads offline language packs
 
-## Local data
+## Local protection
 
-- Settings and caches under user profile / `tdata`
-- Offline models: `tdata/drakey/mt_models/` (downloaded artifacts only)
-- No pack uploader in client
+- Prefer Desktop **local passcode**
+- SessionGuard device seal (see `docs/SESSION_PROTECTION.md`)
 
-## Build / release
-
-- Build with official toolchain; do not embed API secrets in public forks
-- API ID/Hash from [my.telegram.org](https://my.telegram.org) at build time only
-- Prefer reproducible Release builds (`scripts/build-*.sh`)
-
-## Upstream Telegram security updates
-
-Official protocol and crypto fixes land in [telegramdesktop/tdesktop](https://github.com/telegramdesktop/tdesktop).
-
-```bash
-bash scripts/sync-upstream-telegram.sh
-```
-
-See script help for merge/rebase modes.
-
-## Audit
+Run before every release:
 
 ```bash
 bash scripts/security-audit.sh
+bash scripts/production-ready.sh
 ```
-
-Must exit 0 before release.
-
-## Reporting
-
-Report vulnerabilities privately to the repository owner. Do not file public issues with exploit details.

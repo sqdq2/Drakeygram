@@ -1,4 +1,4 @@
-// Offline provider — Option 1: bundled engine + Mozilla packs. No engine network.
+// Offline-only backend. Zero Google services. Zero cloud translate.
 
 #include "ayu/features/translator/implementations/google.h"
 #include "ayu/features/translator/offline/offline_mt_engine.h"
@@ -37,7 +37,6 @@ QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 		fromLang = QStringLiteral("en");
 	}
 
-	// Local file copy of bundled engine if needed — no download.
 	OfflineMtEngine::Instance().ensureBundledEngineReady();
 
 	QTimer::singleShot(0, qApp, [text, fromLang, toLang, onSuccess, onFail] {
@@ -53,7 +52,8 @@ QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 		}
 	});
 
+	// Never returns a network reply for translation text.
 	return nullptr;
 }
 
-}
+} // namespace Ayu::Translator

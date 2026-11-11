@@ -1,4 +1,4 @@
-// Drakeygram settings — Option 1 offline (bundled engine)
+// Settings — only Telegram translate + Offline (local). No Google/Yandex UI.
 
 #include "ayu/ui/settings/settings_general.h"
 
@@ -20,10 +20,18 @@ namespace {
 void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	builder.addSubsectionTitle(tr::lng_translate_settings_subtitle());
 
+	// Only two choices — cloud Google/Yandex removed from product.
 	const auto items = std::vector{
 		std::pair(TranslationProvider::Telegram, QString("Telegram")),
-		std::pair(TranslationProvider::Google, QString("Offline (bundled engine)")),
+		std::pair(TranslationProvider::Google, QString("Offline (local)")),
 	};
+
+	// Migrate away from removed Yandex if still stored in settings.
+	if (AyuSettings::getInstance().translationProvider() == TranslationProvider::Yandex) {
+		auto &s = AyuSettings::getInstance();
+		s.set_translationProvider(TranslationProvider::Telegram);
+		s.save();
+	}
 
 	for (const auto &[provider, title] : items) {
 		ayu.add(builder, {
@@ -45,17 +53,12 @@ void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	const auto engOk = Ayu::Translator::OfflineMtEngine::Instance().engineAvailable();
 	ayu.add(builder, {
 		.title = rpl::single(
-			engOk
-				? QString("Offline engine: ready (bundled)")
-				: QString("Offline engine: not in this build")),
-		.label = rpl::single(QString("Engine ships with the app — no download")),
+			engOk ? QString("Offline engine: ready") : QString("Offline engine: not bundled")),
 		.callback = [=](bool) {
-			auto &e = Ayu::Translator::OfflineMtEngine::Instance();
-			if (e.ensureBundledEngineReady()) {
+			if (Ayu::Translator::OfflineMtEngine::Instance().ensureBundledEngineReady()) {
 				Ui::Toast::Show(rpl::single(QString("Offline engine ready")));
 			} else {
-				Ui::Toast::Show(rpl::single(QString(
-					"This build has no bundled engine. Maintainer: scripts/bundle-offline-engine.sh")));
+				Ui::Toast::Show(rpl::single(QString("Engine not shipped in this build")));
 			}
 		},
 	});
@@ -64,16 +67,14 @@ void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.title = rpl::single(QString("Refresh offline pack catalog")),
 		.callback = [=](bool) {
 			Ayu::Translator::OfflineMtPacks::instance().refreshCatalog();
-			Ui::Toast::Show(rpl::single(QString("Refreshing pack list…")));
 		},
 	});
 
 	builder.add(object_ptr<Ui::FlatLabel>(
 		builder.widget(),
 		rpl::single(QString(
-			"Lightweight Option 1: translation engine is part of the app package. "
-			"Only language packs download from official Mozilla sources when you ask. "
-			"Chat text never leaves the device.")),
+			"Google Translate, Yandex Translate, trackers, and dpaste are removed. "
+			"Use Telegram translate or Offline (local packs + bundled engine).")),
 		st::boxDividerLabel));
 }
 

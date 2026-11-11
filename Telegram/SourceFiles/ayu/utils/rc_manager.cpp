@@ -1,52 +1,37 @@
-// Drakeygram Desktop
-// Fully independent fork. No external tracking.
+// Drakeygram — remote config / tracker system permanently local-only.
+// No network. No third-party endpoints.
 
 #include "ayu/utils/rc_manager.h"
-
-#include <QTimer>
-
-// Completely local. No network requests. No AyuGram / Extera endpoints.
 
 std::unordered_set<ID> default_developers = {};
 std::unordered_set<ID> default_channels = {};
 
 void RCManager::start() {
-	DEBUG_LOG(("RCManager: local-only mode (network disabled)"));
-	// Intentionally no network manager, no timer, no requests.
-	// All remote config / developer lists / badges are disabled.
+	DEBUG_LOG(("RCManager: permanently local-only (all remote config removed)"));
 	initialized = true;
 }
 
-void RCManager::makeRequest() {
-	// no-op
-}
-
-void RCManager::sendRequest() {
-	// no-op
-}
+void RCManager::makeRequest() {}
+void RCManager::sendRequest() {}
 
 bool RCManager::tryRetryWithExteraFallback() {
 	return false;
 }
 
-void RCManager::gotResponse() {
-	// no-op
-}
+void RCManager::gotResponse() {}
 
-bool RCManager::handleResponse(const QByteArray &response) {
+bool RCManager::handleResponse(const QByteArray &) {
 	return false;
 }
 
-bool RCManager::applyResponse(const QByteArray &response) {
+bool RCManager::applyResponse(const QByteArray &) {
 	return false;
 }
 
-void RCManager::gotFailure(QNetworkReply::NetworkError e) {
-	// no-op
-}
+void RCManager::gotFailure(QNetworkReply::NetworkError) {}
 
 void RCManager::clearSentRequest() {
-	// no-op
+	_manager = nullptr;
 }
 
 RCManager::~RCManager() {
