@@ -1,28 +1,22 @@
-# Drakeygram feature matrix (maintain this when merging upstream)
+# Feature matrix
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Messaging (Telegram) | Working | Upstream tdesktop |
-| Ghost mode / privacy toggles | Working | Local `ayu/` |
-| Anti-recall / local history | Working | Local |
-| Filters (local regex) | Working if filters_utils restored | No dpaste |
-| RCManager / AyuGram trackers | Disabled | Must stay disabled after upstream merge |
-| Google/Yandex cloud translate | Disabled | Must stay disabled |
-| Telegram official translate | Working | Cloud Telegram |
-| Offline MT pack download (Mozilla GET) | Code present | HTTPS GET only on user action |
-| Offline MT in-process Bergamot decode | Not linked | Future: link bergamot-translator |
-| UI language packs catalog | Partial | `lang/index.json` |
-| SessionGuard device seal | Code present | Add to CMake; enable + local passcode |
-| Sessions across devices | Working | Normal Telegram multi-session |
-| Sessions across app update | Working | Keep `tdata/`; vault helpers |
-| Build scripts L/M/W | Present | API ID+Hash only |
-| Upstream sync script | Present | `scripts/sync-upstream-telegram.sh` |
-| Security audit script | Present | Run before every release |
+| Feature | Status |
+|---------|--------|
+| Telegram messaging / multi-session | Working |
+| Ghost mode / local privacy | Working |
+| RCManager trackers | Disabled |
+| Google/Yandex cloud MT | Disabled |
+| Telegram translate | Working |
+| Offline pack download (Mozilla GET, user only) | Implemented |
+| Offline neural decode via local Bergamot CLI | Implemented (needs binary on machine) |
+| SessionGuard device seal | Implemented + init in ayu_infra |
+| Sessions survive update | Keep tdata + vault |
+| Filters without dpaste | Restore production filters_utils if remote still has dpaste |
+| plugin_info_box full | Restore if remote still stub |
+| Build/audit/upstream scripts | Present |
 
-## Future-proof rules
+## Pending only if environment incomplete
 
-1. After every `sync-upstream-telegram.sh`, run `security-audit.sh` and re-apply CMake helpers.
-2. Never re-enable AyuGram remote config, Google/Yandex translate, or dpaste.
-3. Pack network = user-initiated HTTPS GET only.
-4. Session protection = local passcode + SessionGuard; cannot override Telegram server logout.
-5. Prefer additive files under `ayu/` so upstream merges conflict less.
+1. Bergamot **binary** installed for offline decode to return text
+2. CMake extras applied: `bash scripts/apply-all-cmake-extras.sh`
+3. Restore stub/dpaste files if gate fails

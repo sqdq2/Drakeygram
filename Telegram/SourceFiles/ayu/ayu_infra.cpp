@@ -8,6 +8,7 @@
 #include "ayu/ayu_ui_settings.h"
 #include "ayu/ayu_worker.h"
 #include "ayu/data/ayu_database.h"
+#include "ayu/security/session_guard.h"
 #include "ayu/ui/ayu_logo.h"
 #include "features/translator/ayu_translator.h"
 #include "lang/lang_instance.h"
@@ -58,6 +59,19 @@ void initTranslator() {
 	Ayu::Translator::TranslateManager::init();
 }
 
+void initSessionGuard() {
+	// Device-bound session protection — no network.
+	Ayu::Security::LogSessionProtectionBanner();
+	auto &guard = Ayu::Security::SessionGuard::Instance();
+	// Restore seal markers after app update if present.
+	guard.restoreFromUpdateVault();
+	// Verification with empty secret only reports status; real verify uses local passcode path.
+	const auto st = guard.verifySeal(QByteArray());
+	if (st.sealPresent && !st.sealValid) {
+		LOG(("SessionGuard: seal present — unlock requires correct local secret on this device"));
+	}
+}
+
 void initIcon() {
 #ifdef Q_OS_WIN
 	AyuAssets::loadAppIco();
@@ -73,6 +87,7 @@ void init() {
 	initWorker();
 	initRCManager();
 	initTranslator();
+	initSessionGuard();
 }
 
 }

@@ -1,9 +1,10 @@
-// Drakeygram — offline translate path
-// NO external server contact during translation.
-// Network for packs happens only in OfflineMtPacks::refreshCatalog / downloadPack (user action).
+// Offline provider: local packs + local Bergamot decode. Zero network for text.
 
 #include "ayu/features/translator/implementations/google.h"
+#include "ayu/features/translator/offline/offline_mt_engine.h"
 #include "ayu/features/translator/offline/offline_mt_packs.h"
+
+#include <QtCore/QTimer>
 
 namespace Ayu::Translator {
 
@@ -19,13 +20,13 @@ GoogleTranslator::GoogleTranslator(QObject *parent)
 QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 	const MultiThreadArgs &args
 ) {
-	// Intentionally no QNetworkAccessManager usage here — zero server contact while translating.
 	static_assert(OfflineMtPacks::kNeverUploadUserText);
 	static_assert(OfflineMtPacks::kNoBackgroundNetwork);
 
-	const auto &text = args.parsedData.text;
+	const auto text = args.parsedData.text;
 	auto fromLang = args.parsedData.fromLang.trimmed();
 	const auto toLang = args.parsedData.toLang.trimmed();
+	const auto onSuccess = args.onSuccess;
 	const auto onFail = args.onFail;
 
 	if (text.text.trimmed().isEmpty() || toLang.isEmpty()) {
@@ -34,15 +35,21 @@ QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 	}
 	if (fromLang.isEmpty()) fromLang = QStringLiteral("en");
 
-	if (!OfflineMtPacks::instance().isInstalled(fromLang, toLang)) {
-		LOG(("OfflineMT: pack not on disk — download from Settings first (only then uses network)"));
-		if (onFail) onFail();
-		return nullptr;
-	}
+	// Run decode asynchronously on Qt thread without networking.
+	QTimer::singleShot(0, qApp, [text, fromLang, toLang, onSuccess, onFail] {
+		const auto result = OfflineMtEngine::Instance().decode(
+			text.text, fromLang, toLang);
+		if (!result.ok) {
+			LOG(("OfflineMT: decode failed: %1").arg(result.error));
+			if (onFail) onFail();
+			return;
+		}
+		if (onSuccess) {
+			onSuccess(TextWithEntities{ result.text });
+		}
+	});
 
-	// Local inference only (Bergamot when linked). No server.
-	LOG(("OfflineMT: local pack present; no network during translate"));
-	if (onFail) onFail();
+	// No QNetworkReply — no server.
 	return nullptr;
 }
 
