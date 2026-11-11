@@ -15,16 +15,12 @@ namespace {
 
 BaseTranslator *translatorForProvider(TranslationProvider provider) {
 	switch (provider) {
-	case TranslationProvider::Google:
-		// Internal alias → offline local engine only (not Google).
-		return &GoogleTranslator::instance();
-	case TranslationProvider::Yandex:
-		// Permanently removed — fall back to offline hard-fail instance.
-		return &YandexTranslator::instance();
+	case TranslationProvider::Offline:
+		return &OfflineTranslator::instance(); // after rename in Step 3
 	case TranslationProvider::Telegram:
 	case TranslationProvider::Native:
 	default:
-		return nullptr; // official Telegram path handled upstream
+		return nullptr;
 	}
 }
 
