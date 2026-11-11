@@ -40,8 +40,8 @@ enum class ContextMenuVisibility {
 
 enum class TranslationProvider {
 	Telegram = 0,
-	Google = 1,
-	Yandex = 2,
+	Offline = 1,   // was Google (offline local only)
+	// Yandex removed
 	Native = 3,
 };
 
@@ -71,8 +71,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(ContextMenuVisibility, {
 
 NLOHMANN_JSON_SERIALIZE_ENUM(TranslationProvider, {
 	{TranslationProvider::Telegram, "telegram"},
-	{TranslationProvider::Google, "google"},
-	{TranslationProvider::Yandex, "yandex"},
+	{TranslationProvider::Offline, "offline"},
 	{TranslationProvider::Native, "native"},
 })
 
