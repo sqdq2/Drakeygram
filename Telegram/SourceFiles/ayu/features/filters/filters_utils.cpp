@@ -296,51 +296,6 @@ void FilterUtils::importFromLink(const QString &link) {
 	LOG(("FilterUtils: importFromLink disabled (production)"));
 }
 
-	const auto request = QNetworkRequest(QUrl(link));
-	const auto reply = _manager->get(request);
-	const auto failed = std::make_shared<bool>(false);
-
-	connect(
-		reply,
-		&QNetworkReply::finished,
-		this,
-		[=]
-		{
-			if (*failed) {
-				reply->deleteLater();
-				return;
-			}
-
-			const auto responseData = reply->readAll();
-
-			const auto jsonString = QString::fromUtf8(responseData);
-
-			if (jsonString.isNull()) {
-				LOG(("FilterUtils: Invalid response."));
-				Ui::Toast::Show(tr::ayu_FiltersToastFailImport(tr::now));
-
-				reply->deleteLater();
-				return;
-			}
-
-			handleResponse(jsonString.toUtf8());
-			reply->deleteLater();
-		});
-
-	connect(
-		reply,
-		&QNetworkReply::errorOccurred,
-		this,
-		[=](QNetworkReply::NetworkError e)
-		{
-			if (*failed) {
-				return;
-			}
-			*failed = true;
-			gotFailure(e);
-			reply->deleteLater();
-		});
-}
 void FilterUtils::publishFilters() {
 	const auto exported = exportFilters();
 	if (exported.isEmpty()) {
