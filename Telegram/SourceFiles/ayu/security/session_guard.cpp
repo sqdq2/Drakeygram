@@ -1,32 +1,24 @@
 // Drakeygram — device-bound session seal (anti-theft)
-// Seal file format (binary-ish text):
-//   DRAKEYSEAL1\n
-//   salt=<hex>\n
-//   mac=<hex>\n
-// mac = HMAC-SHA256(bindingKey, deviceFingerprint || "drakeygram-session-seal-v1")
-// Without correct machine fingerprint + local secret, mac verification fails.
+// Seal: DRAKEYSEAL1 + salt + HMAC-SHA256(deviceFingerprint + secret).
+// Copied tdata without same machine + secret fails verification.
 
 #include "ayu/security/session_guard.h"
 
-#include <QCryptographicHash>
-#include <QDir>
-#include <QFile>
-#include <QSysInfo>
-#include <QRandomGenerator>
-#include <QStorageInfo>
+#include "storage/localstorage.h"
+
+#include <QtCore/QCryptographicHash>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QRandomGenerator>
+#include <QtCore/QStorageInfo>
+#include <QtCore/QSysInfo>
 
 namespace Ayu::Security {
 namespace {
 
-QByteArray toHex(const QByteArray &b) {
-	return b.toHex();
-}
+QByteArray toHex(const QByteArray &b) { return b.toHex(); }
+QByteArray fromHex(const QByteArray &h) { return QByteArray::fromHex(h); }
 
-QByteArray fromHex(const QByteArray &h) {
-	return QByteArray::fromHex(h);
-}
-
-// HMAC-SHA256 with secret key (HMAC construction).
 QByteArray hmacSha256(const QByteArray &key, const QByteArray &message) {
 	const int block = 64;
 	QByteArray k = key;
@@ -63,31 +55,28 @@ SessionGuard &SessionGuard::Instance() {
 }
 
 QByteArray SessionGuard::deviceFingerprint() const {
-	// Combine non-secret machine traits. Not a privacy ID published anywhere — local binding only.
 	QStringList parts;
 	parts << QSysInfo::machineHostName();
 	parts << QSysInfo::machineUniqueId();
 	parts << QSysInfo::currentCpuArchitecture();
 	parts << QSysInfo::productType();
 	parts << QSysInfo::kernelType();
-	// Boot volume name helps reduce easy VM clone collisions (best-effort).
 	const QStorageInfo root = QStorageInfo::root();
 	parts << root.device();
 	parts << root.fileSystemType();
-	const auto raw = parts.join(QLatin1Char('|')).toUtf8();
-	return QCryptographicHash::hash(raw, QCryptographicHash::Sha256);
+	return QCryptographicHash::hash(parts.join(QLatin1Char('|')).toUtf8(), QCryptographicHash::Sha256);
 }
 
 QString SessionGuard::guardRoot() const {
-	return cWorkingDir() + u"tdata/drakey/session_guard/"_q;
+	return cWorkingDir() + QStringLiteral("tdata/drakey/session_guard/");
 }
 
 QString SessionGuard::sealPath() const {
-	return guardRoot() + u"seal.v1"_q;
+	return guardRoot() + QStringLiteral("seal.v1");
 }
 
 QString SessionGuard::vaultPath() const {
-	return guardRoot() + u"update_vault/"_q;
+	return guardRoot() + QStringLiteral("update_vault/");
 }
 
 QByteArray SessionGuard::deriveBindingKey(
@@ -103,18 +92,17 @@ QByteArray SessionGuard::deriveBindingKey(
 
 bool SessionGuard::createOrRefreshSeal(const QByteArray &localSecret) {
 	if (localSecret.isEmpty()) {
-		LOG(("SessionGuard: refuse empty local secret — set Desktop local passcode / secret"));
+		LOG(("SessionGuard: empty secret rejected"));
 		return false;
 	}
 	QDir().mkpath(guardRoot());
 	const auto salt = randomSalt(32);
 	const auto key = deriveBindingKey(localSecret, salt);
-	const auto msg = deviceFingerprint() + QByteArrayLiteral("drakeygram-session-seal-v1");
-	const auto mac = hmacSha256(key, msg);
-
+	const auto mac = hmacSha256(
+		key,
+		deviceFingerprint() + QByteArrayLiteral("drakeygram-session-seal-v1"));
 	QFile f(sealPath());
 	if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-		LOG(("SessionGuard: cannot write seal"));
 		return false;
 	}
 	f.write("DRAKEYSEAL1\n");
@@ -122,7 +110,7 @@ bool SessionGuard::createOrRefreshSeal(const QByteArray &localSecret) {
 	f.write("mac=" + toHex(mac) + "\n");
 	f.close();
 	writeUpdateVault();
-	LOG(("SessionGuard: seal created/refreshed (device-bound)"));
+	LOG(("SessionGuard: seal refreshed"));
 	return true;
 }
 
@@ -130,88 +118,68 @@ SessionGuardStatus SessionGuard::verifySeal(const QByteArray &localSecret) const
 	SessionGuardStatus st;
 	QFile f(sealPath());
 	if (!f.exists()) {
-		st.message = QStringLiteral("No seal yet — enable protection after setting a local secret/passcode.");
+		st.message = QStringLiteral("No seal — enable after local passcode.");
 		return st;
 	}
 	st.sealPresent = true;
 	if (!f.open(QIODevice::ReadOnly)) {
-		st.message = QStringLiteral("Seal unreadable.");
+		st.message = QStringLiteral("Seal unreadable");
 		return st;
 	}
-	const auto lines = f.readAll().split('\n');
-	f.close();
 	QByteArray saltHex, macHex;
-	for (const auto &line : lines) {
+	for (const auto &line : f.readAll().split('\n')) {
 		if (line.startsWith("salt=")) saltHex = line.mid(5).trimmed();
 		if (line.startsWith("mac=")) macHex = line.mid(4).trimmed();
 	}
+	f.close();
 	if (saltHex.isEmpty() || macHex.isEmpty()) {
-		st.message = QStringLiteral("Seal corrupted.");
+		st.message = QStringLiteral("Seal corrupted");
 		return st;
 	}
-	const auto salt = fromHex(saltHex);
-	const auto expected = fromHex(macHex);
-	const auto key = deriveBindingKey(localSecret, salt);
-	const auto msg = deviceFingerprint() + QByteArrayLiteral("drakeygram-session-seal-v1");
-	const auto actual = hmacSha256(key, msg);
-	st.deviceMatch = true; // fingerprint used in derivation; mismatch → mac fail
-	st.sealValid = (actual == expected && !localSecret.isEmpty());
+	const auto actual = hmacSha256(
+		deriveBindingKey(localSecret, fromHex(saltHex)),
+		deviceFingerprint() + QByteArrayLiteral("drakeygram-session-seal-v1"));
+	st.sealValid = (actual == fromHex(macHex) && !localSecret.isEmpty());
+	st.deviceMatch = st.sealValid;
+	st.message = st.sealValid
+		? QStringLiteral("Session seal OK")
+		: QStringLiteral("PROTECTED: seal mismatch — session data not valid on this device/secret");
 	if (!st.sealValid) {
-		st.deviceMatch = false;
-		st.message = QStringLiteral(
-			"SESSION PROTECTED: seal mismatch. Copied session data will not unlock on this device/secret.");
-		LOG(("SessionGuard: VERIFY FAILED — possible theft or different machine/secret"));
-	} else {
-		st.message = QStringLiteral("Session seal OK (device-bound).");
+		LOG(("SessionGuard: VERIFY FAILED"));
 	}
 	return st;
 }
 
 bool SessionGuard::writeUpdateVault() {
-	const auto v = vaultPath();
-	QDir().mkpath(v);
-	if (!QFile::exists(sealPath())) {
-		return false;
-	}
-	const auto dest = v + u"seal.v1"_q;
+	QDir().mkpath(vaultPath());
+	if (!QFile::exists(sealPath())) return false;
+	const auto dest = vaultPath() + QStringLiteral("seal.v1");
 	QFile::remove(dest);
-	if (!QFile::copy(sealPath(), dest)) {
-		LOG(("SessionGuard: vault copy failed"));
-		return false;
-	}
-	// Marker so updaters know sessions must be preserved.
-	QFile m(v + u"KEEP_TDATA"_q);
+	if (!QFile::copy(sealPath(), dest)) return false;
+	QFile m(vaultPath() + QStringLiteral("KEEP_TDATA"));
 	if (m.open(QIODevice::WriteOnly)) {
-		m.write("Do not delete tdata. Drakeygram sessions live here.\n");
+		m.write("Preserve tdata across updates.\n");
 		m.close();
 	}
 	return true;
 }
 
 bool SessionGuard::restoreFromUpdateVault() {
-	const auto src = vaultPath() + u"seal.v1"_q;
-	if (!QFile::exists(src)) {
-		return false;
-	}
+	const auto src = vaultPath() + QStringLiteral("seal.v1");
+	if (!QFile::exists(src)) return false;
 	QDir().mkpath(guardRoot());
 	QFile::remove(sealPath());
-	if (!QFile::copy(src, sealPath())) {
-		return false;
-	}
-	LOG(("SessionGuard: seal restored from update vault"));
-	return true;
+	return QFile::copy(src, sealPath());
 }
 
 void SessionGuard::destroySeal() {
 	QFile::remove(sealPath());
-	QFile::remove(vaultPath() + u"seal.v1"_q);
-	LOG(("SessionGuard: seal destroyed"));
+	QFile::remove(vaultPath() + QStringLiteral("seal.v1"));
 }
 
 void LogSessionProtectionBanner() {
-	LOG(("SessionGuard: device-bound seal + local secret. "
-		"Stolen tdata without secret+device binding must not verify. "
-		"Always enable Telegram Desktop local passcode as base layer."));
+	LOG(("SessionGuard active policy: local passcode + device-bound seal; "
+		"stolen tdata without binding must not verify"));
 }
 
 } // namespace Ayu::Security
