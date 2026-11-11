@@ -1,4 +1,4 @@
-// Settings — only Telegram translate + Offline (local). No Google/Yandex UI.
+// Settings — Telegram + Offline only (no Google/Yandex names)
 
 #include "ayu/ui/settings/settings_general.h"
 
@@ -20,18 +20,10 @@ namespace {
 void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	builder.addSubsectionTitle(tr::lng_translate_settings_subtitle());
 
-	// Only two choices — cloud Google/Yandex removed from product.
 	const auto items = std::vector{
 		std::pair(TranslationProvider::Telegram, QString("Telegram")),
-		std::pair(TranslationProvider::Google, QString("Offline (local)")),
+		std::pair(TranslationProvider::Offline, QString("Offline (local)")),
 	};
-
-	// Migrate away from removed Yandex if still stored in settings.
-	if (AyuSettings::getInstance().translationProvider() == TranslationProvider::Yandex) {
-		auto &s = AyuSettings::getInstance();
-		s.set_translationProvider(TranslationProvider::Telegram);
-		s.save();
-	}
 
 	for (const auto &[provider, title] : items) {
 		ayu.add(builder, {
@@ -43,7 +35,7 @@ void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 				auto &s = AyuSettings::getInstance();
 				s.set_translationProvider(provider);
 				s.save();
-				if (provider == TranslationProvider::Google) {
+				if (provider == TranslationProvider::Offline) {
 					Ayu::Translator::OfflineMtEngine::Instance().ensureBundledEngineReady();
 				}
 			},
@@ -73,8 +65,8 @@ void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	builder.add(object_ptr<Ui::FlatLabel>(
 		builder.widget(),
 		rpl::single(QString(
-			"Google Translate, Yandex Translate, trackers, and dpaste are removed. "
-			"Use Telegram translate or Offline (local packs + bundled engine).")),
+			"Providers: Telegram or Offline (local). "
+			"Google/Yandex cloud translate names removed.")),
 		st::boxDividerLabel));
 }
 
