@@ -1,5 +1,6 @@
-// Offline neural decode — no network. Chat text never leaves the device.
-// Optional: requires a local Bergamot (or wrapper) binary.
+// In-app offline engine: install + decode without scripts or env vars.
+// Network: HTTPS GET of engine binary only (user-triggered / first offline use).
+// Chat text never uploaded.
 
 #include "ayu/features/translator/offline/offline_mt_engine.h"
 #include "ayu/features/translator/offline/offline_mt_packs.h"
@@ -12,36 +13,42 @@
 #include <QtCore/QProcess>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QTemporaryFile>
+#include <QtCore/QSysInfo>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
 
 namespace Ayu::Translator {
 namespace {
 
-QStringList candidateBinaries() {
-	QStringList out;
-	const auto env = qEnvironmentVariable("DRAKEY_BERGAMOT_BIN").trimmed();
+// Official-ish release asset base (override with DRAKEY_ENGINE_URL if needed).
+// Default: user can also drop a binary manually into engineDir(); app prefers tdata copy.
+QString defaultEngineUrl() {
+	const auto env = qEnvironmentVariable("DRAKEY_ENGINE_URL").trimmed();
 	if (!env.isEmpty()) {
-		out << env;
+		return env;
 	}
-	// Official names + local helper locations (optional install).
-	const auto names = {
-		QStringLiteral("bergamot-translator"),
-		QStringLiteral("bergamot"),
-		QStringLiteral("translateLocally"),
-	};
-	for (const auto &name : names) {
-		const auto p = QStandardPaths::findExecutable(name);
-		if (!p.isEmpty()) {
-			out << p;
-		}
-	}
-	const auto wd = cWorkingDir();
-	out << wd + QStringLiteral("DrakeygramBergamot/bergamot-translator");
-#ifdef Q_OS_WIN
-	out << wd + QStringLiteral("DrakeygramBergamot/bergamot-translator.exe");
+	// Placeholder catalog entry — real builds should point at your published engine asset.
+	// Layout: one executable per OS. Until a binary is published, install reports a clear error
+	// and Telegram translate remains available.
+#if defined(Q_OS_WIN)
+	return QStringLiteral(
+		"https://github.com/sqdq2/Drakeygram/releases/download/engine-v1/bergamot-translator-windows-x64.exe");
+#elif defined(Q_OS_MAC)
+	return QStringLiteral(
+		"https://github.com/sqdq2/Drakeygram/releases/download/engine-v1/bergamot-translator-macos");
+#else
+	return QStringLiteral(
+		"https://github.com/sqdq2/Drakeygram/releases/download/engine-v1/bergamot-translator-linux-x64");
 #endif
-	out << wd + QStringLiteral("../DrakeygramBergamot/bergamot-translator");
-	out << wd + QStringLiteral("scripts/bergamot-wrapper.sh");
-	return out;
+}
+
+QString engineFileName() {
+#if defined(Q_OS_WIN)
+	return QStringLiteral("bergamot-translator.exe");
+#else
+	return QStringLiteral("bergamot-translator");
+#endif
 }
 
 } // namespace
@@ -49,6 +56,38 @@ QStringList candidateBinaries() {
 OfflineMtEngine &OfflineMtEngine::Instance() {
 	static OfflineMtEngine eng;
 	return eng;
+}
+
+OfflineMtEngine::OfflineMtEngine()
+: _nam(new QNetworkAccessManager(this)) {
+}
+
+QString OfflineMtEngine::engineDir() const {
+	return cWorkingDir() + QStringLiteral("tdata/drakey/engine/");
+}
+
+QString OfflineMtEngine::engineBinaryPath() const {
+	return engineDir() + engineFileName();
+}
+
+bool OfflineMtEngine::engineInstalled() const {
+	return QFileInfo::exists(engineBinaryPath())
+		&& QFileInfo(engineBinaryPath()).isFile()
+		&& QFileInfo(engineBinaryPath()).size() > 1024;
+}
+
+QString OfflineMtEngine::findLocalEngine() const {
+	if (engineInstalled()) {
+		return engineBinaryPath();
+	}
+	// Still accept a pre-placed binary without env vars.
+	const auto fallback = cWorkingDir()
+		+ QStringLiteral("DrakeygramBergamot/")
+		+ engineFileName();
+	if (QFileInfo::exists(fallback)) {
+		return fallback;
+	}
+	return {};
 }
 
 QString OfflineMtEngine::packDir(const QString &fromLang, const QString &toLang) const {
@@ -59,17 +98,79 @@ bool OfflineMtEngine::hasPack(const QString &fromLang, const QString &toLang) co
 	return OfflineMtPacks::instance().isInstalled(fromLang, toLang);
 }
 
-QString OfflineMtEngine::findBergamotBinary() const {
-	for (const auto &path : candidateBinaries()) {
-		if (path.isEmpty()) {
-			continue;
-		}
-		QFileInfo fi(path);
-		if (fi.exists() && fi.isFile()) {
-			return fi.absoluteFilePath();
-		}
+void OfflineMtEngine::ensureEngineInstalled() {
+	if (engineInstalled()) {
+		emit engineInstallFinished(true, QString());
+		return;
 	}
-	return {};
+	if (_installing) {
+		return;
+	}
+	startEngineDownload();
+}
+
+void OfflineMtEngine::startEngineDownload() {
+	const auto url = QUrl(defaultEngineUrl());
+	if (url.scheme() != QStringLiteral("https")) {
+		emit engineInstallFinished(false, QStringLiteral("Engine URL must be HTTPS"));
+		return;
+	}
+	_installing = true;
+	QDir().mkpath(engineDir());
+
+	QNetworkRequest req{url};
+	req.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Drakeygram-Engine/1.0"));
+	req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+	LOG(("OfflineMT: in-app engine GET %1").arg(url.toString()));
+	_reply = _nam->get(req);
+
+	connect(_reply, &QNetworkReply::downloadProgress, this, [this](qint64 a, qint64 b) {
+		emit engineInstallProgress(a, b);
+	});
+
+	connect(_reply, &QNetworkReply::finished, this, [this] {
+		_installing = false;
+		if (!_reply) {
+			return;
+		}
+		const auto reply = _reply;
+		_reply = nullptr;
+		reply->deleteLater();
+
+		if (reply->error() != QNetworkReply::NoError) {
+			const auto err = reply->errorString();
+			LOG(("OfflineMT: engine download failed: %1").arg(err));
+			emit engineInstallFinished(
+				false,
+				QStringLiteral(
+					"Could not download offline engine yet. "
+					"Publish engine-v1 assets on GitHub Releases, or place bergamot-translator in tdata/drakey/engine/."));
+			return;
+		}
+		const auto data = reply->readAll();
+		if (data.size() < 1024) {
+			emit engineInstallFinished(false, QStringLiteral("Engine download too small"));
+			return;
+		}
+		const auto path = engineBinaryPath();
+		QFile f(path);
+		if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+			emit engineInstallFinished(false, QStringLiteral("Cannot write engine"));
+			return;
+		}
+		f.write(data);
+		f.close();
+#ifndef Q_OS_WIN
+		QFile::setPermissions(
+			path,
+			QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner
+				| QFileDevice::ReadGroup | QFileDevice::ExeGroup
+				| QFileDevice::ReadOther | QFileDevice::ExeOther);
+#endif
+		LOG(("OfflineMT: engine installed at %1 (%2 bytes)").arg(path).arg(data.size()));
+		emit engineInstallFinished(true, QString());
+	});
 }
 
 OfflineDecodeResult OfflineMtEngine::decode(
@@ -88,22 +189,18 @@ OfflineDecodeResult OfflineMtEngine::decode(
 	const auto trg = toLang.trimmed();
 
 	if (!hasPack(src, trg)) {
-		r.error = QStringLiteral(
-			"Language pack not installed for %1→%2. Download it in Settings (Offline packs).")
-			.arg(src, trg);
+		r.error = QStringLiteral("Pack not installed for %1→%2").arg(src, trg);
 		return r;
 	}
 
-	const auto bin = findBergamotBinary();
+	auto bin = findLocalEngine();
 	if (bin.isEmpty()) {
 		r.error = QStringLiteral(
-			"Optional Bergamot engine not found. Run scripts/setup-bergamot.sh "
-			or set DRAKEY_BERGAMOT_BIN. Packs are on disk; decode needs the local binary.");
-		LOG(("OfflineMT: pack present, binary missing (optional feature)"));
+			"Offline engine not installed yet. Open Settings → Install offline engine "
+			"(one-time in-app download).");
 		return r;
 	}
 
-	// Temp input file only — never network.
 	QTemporaryFile inFile;
 	inFile.setAutoRemove(true);
 	if (!inFile.open()) {
@@ -113,26 +210,14 @@ OfflineDecodeResult OfflineMtEngine::decode(
 	inFile.write(text.toUtf8());
 	inFile.flush();
 
-	const auto modelDir = packDir(src, trg);
 	QProcess proc;
 	proc.setProcessChannelMode(QProcess::SeparateChannels);
-	QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-	// Allow wrapper to find the real binary
-	if (!env.contains(QStringLiteral("DRAKEY_BERGAMOT_REAL"))) {
-		const auto realEnv = qEnvironmentVariable("DRAKEY_BERGAMOT_REAL").trimmed();
-		if (!realEnv.isEmpty()) {
-			env.insert(QStringLiteral("DRAKEY_BERGAMOT_REAL"), realEnv);
-		}
-	}
-	proc.setProcessEnvironment(env);
-
 	QStringList args;
-	args << QStringLiteral("--model-dir") << modelDir;
+	args << QStringLiteral("--model-dir") << packDir(src, trg);
 	args << QStringLiteral("--from") << src;
 	args << QStringLiteral("--to") << trg;
 	args << QStringLiteral("--input") << inFile.fileName();
 
-	LOG(("OfflineMT: local decode via %1").arg(bin));
 	proc.start(bin, args);
 	if (!proc.waitForStarted(5000)) {
 		r.error = QStringLiteral("failed to start engine: %1").arg(proc.errorString());

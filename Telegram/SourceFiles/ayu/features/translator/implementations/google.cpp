@@ -1,10 +1,11 @@
-// Offline provider: local packs + local Bergamot decode. Zero network for text.
+// Offline provider: in-app packs + in-app engine. No user scripts/env required.
 
 #include "ayu/features/translator/implementations/google.h"
 #include "ayu/features/translator/offline/offline_mt_engine.h"
 #include "ayu/features/translator/offline/offline_mt_packs.h"
 
 #include <QtCore/QTimer>
+#include <QtWidgets/QApplication>
 
 namespace Ayu::Translator {
 
@@ -14,14 +15,13 @@ GoogleTranslator &GoogleTranslator::instance() {
 }
 
 GoogleTranslator::GoogleTranslator(QObject *parent)
-	: MultiThreadTranslator(parent) {
+: MultiThreadTranslator(parent) {
 }
 
 QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 	const MultiThreadArgs &args
 ) {
 	static_assert(OfflineMtPacks::kNeverUploadUserText);
-	static_assert(OfflineMtPacks::kNoBackgroundNetwork);
 
 	const auto text = args.parsedData.text;
 	auto fromLang = args.parsedData.fromLang.trimmed();
@@ -33,14 +33,21 @@ QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 		if (onFail) onFail();
 		return nullptr;
 	}
-	if (fromLang.isEmpty()) fromLang = QStringLiteral("en");
+	if (fromLang.isEmpty()) {
+		fromLang = QStringLiteral("en");
+	}
 
-	// Run decode asynchronously on Qt thread without networking.
+	// If engine missing, kick off in-app install (non-blocking) then fail this request cleanly.
+	auto &engine = OfflineMtEngine::Instance();
+	if (!engine.engineInstalled()) {
+		engine.ensureEngineInstalled();
+	}
+
 	QTimer::singleShot(0, qApp, [text, fromLang, toLang, onSuccess, onFail] {
 		const auto result = OfflineMtEngine::Instance().decode(
 			text.text, fromLang, toLang);
 		if (!result.ok) {
-			LOG(("OfflineMT: decode failed: %1").arg(result.error));
+			LOG(("OfflineMT: %1").arg(result.error));
 			if (onFail) onFail();
 			return;
 		}
@@ -49,8 +56,7 @@ QPointer<QNetworkReply> GoogleTranslator::startSingleTranslation(
 		}
 	});
 
-	// No QNetworkReply — no server.
-	return nullptr;
+	return nullptr; // no network reply for chat text
 }
 
 }

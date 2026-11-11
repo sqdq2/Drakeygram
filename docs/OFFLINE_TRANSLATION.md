@@ -1,52 +1,35 @@
-# Offline translation (optional Bergamot decode)
+# Offline translation — fully in-app
 
-## Two pieces
+No terminal scripts or environment variables required for normal use.
 
-| Piece | Required? | What |
-|-------|-----------|------|
-| Language/model **packs** | For offline MT | Download in app (Mozilla HTTPS GET, user only) |
-| **Bergamot** binary | Optional until you want local decode | Runs models on-device |
+## User flow
 
-Without the binary: packs can still download; translate fails closed **locally** (no cloud upload).
+1. Settings → **Offline (in-app)**
+2. Tap **Install offline engine** (one-time HTTPS download into `tdata/drakey/engine/`)
+3. Download language packs you need (Mozilla models, HTTPS GET)
+4. Translate chats — runs locally; chat text is never uploaded
 
-## Quick setup (optional)
+## What the app stores
 
-```bash
-# from repo root
-bash scripts/setup-bergamot.sh
+| Path | Content |
+|------|--------|
+| `tdata/drakey/engine/` | Offline engine binary |
+| `tdata/drakey/mt_models/` | Language/model packs |
 
-# if you built/installed bergamot-translator yourself:
-export DRAKEY_BERGAMOT_BIN=/path/to/bergamot-translator
-# optional when using scripts/bergamot-wrapper.sh:
-export DRAKEY_BERGAMOT_REAL=/path/to/real-engine
-```
+## Engine release assets
 
-Or place the binary at:
+The app downloads from:
 
 ```text
-DrakeygramBergamot/bergamot-translator
+https://github.com/sqdq2/Drakeygram/releases/download/engine-v1/bergamot-translator-<platform>
 ```
 
-next to the app working directory (auto-discovered).
+Publish those assets under GitHub Release tag **`engine-v1`** (linux-x64 / macos / windows-x64.exe).
 
-## CLI contract
-
-```text
-$DRAKEY_BERGAMOT_BIN --model-dir <dir> --from <src> --to <trg> --input <file>
-# translation on stdout
-```
-
-`scripts/bergamot-wrapper.sh` adapts slightly different Bergamot CLIs to this shape.
-
-## In the app
-
-1. Settings → translation provider → **Offline**
-2. Download the language pairs you need
-3. Translate messages / chats (local decode if binary present)
+Until the release exists, install shows an error toast; place a binary manually at `tdata/drakey/engine/bergamot-translator` if needed.
 
 ## Privacy
 
-- No LibreTranslate server
-- No Google/Yandex for this path
-- Network only for **pack download** when you ask
-- Decode never opens the network
+- Engine + packs: GET only when user installs/downloads
+- No Google/Yandex/LibreTranslate cloud for offline path
+- No local server

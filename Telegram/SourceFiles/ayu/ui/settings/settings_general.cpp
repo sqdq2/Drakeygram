@@ -1,23 +1,20 @@
-// This is the source code of AyuGram for Desktop / Drakeygram fork.
-// Copyright retained from upstream contributors where applicable.
+// Drakeygram settings — translation + in-app offline engine
 
 #include "ayu/ui/settings/settings_general.h"
 
 #include "ayu/ayu_lang.h"
 #include "ayu/ayu_settings.h"
+#include "ayu/features/translator/offline/offline_mt_engine.h"
+#include "ayu/features/translator/offline/offline_mt_packs.h"
 #include "ayu/ui/settings/settings_ayu_section.h"
 #include "lang/lang_keys.h"
-#include "layout/layout_item.h"
 #include "settings/settings_common.h"
 #include "styles/style_settings.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/labels.h"
 #include "ui/wrap/vertical_layout.h"
-#include "ui/wrap/slide_wrap.h"
+#include "ui/toast/toast.h"
 #include "boxes/abstract_box.h"
-#include "ui/layers/generic_box.h"
-#include "core/application.h"
-#include "mainwindow.h"
 #include "platform/platform_translate_provider.h"
 
 namespace Settings {
@@ -26,10 +23,9 @@ namespace {
 void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	builder.addSubsectionTitle(tr::lng_translate_settings_subtitle());
 
-	// Telegram = cloud. Offline = local packs + optional Bergamot binary.
 	const auto items = std::vector{
 		std::pair(TranslationProvider::Telegram, QString("Telegram")),
-		std::pair(TranslationProvider::Google, QString("Offline (local Bergamot)")),
+		std::pair(TranslationProvider::Google, QString("Offline (in-app)")),
 	};
 
 	for (const auto &[provider, title] : items) {
@@ -38,22 +34,61 @@ void BuildTranslation(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 			.toggled = rpl::single(
 				AyuSettings::getInstance().translationProvider() == provider),
 			.callback = [=](bool enabled) {
-				if (!enabled) {
-					return;
-				}
+				if (!enabled) return;
 				auto &s = AyuSettings::getInstance();
 				s.set_translationProvider(provider);
 				s.save();
+				if (provider == TranslationProvider::Google) {
+					// Prepare engine in background — no terminal/scripts.
+					Ayu::Translator::OfflineMtEngine::Instance().ensureEngineInstalled();
+				}
 			},
 		});
 	}
 
+	ayu.add(builder, {
+		.title = rpl::single(QString("Install offline engine")),
+		.label = rpl::single(QString("One-time in-app download (HTTPS)")),
+		.callback = [=](bool) {
+			auto &eng = Ayu::Translator::OfflineMtEngine::Instance();
+			if (eng.engineInstalled()) {
+				Ui::Toast::Show(rpl::single(QString("Offline engine already installed")));
+				return;
+			}
+			Ui::Toast::Show(rpl::single(QString("Downloading offline engine…")));
+			QObject::connect(
+				&eng,
+				&Ayu::Translator::OfflineMtEngine::engineInstallFinished,
+				builder.widget(),
+				[=](bool ok, const QString &error) {
+					if (ok) {
+						Ui::Toast::Show(rpl::single(QString("Offline engine ready")));
+					} else {
+						Ui::Toast::Show(rpl::single(
+							error.isEmpty()
+								? QString("Engine install failed")
+								: error));
+					}
+				},
+				static_cast<Qt::ConnectionType>(Qt::UniqueConnection));
+			eng.ensureEngineInstalled();
+		},
+	});
+
+	ayu.add(builder, {
+		.title = rpl::single(QString("Refresh offline pack list")),
+		.callback = [=](bool) {
+			Ayu::Translator::OfflineMtPacks::instance().refreshCatalog();
+			Ui::Toast::Show(rpl::single(QString("Refreshing pack catalog…")));
+		},
+	});
+
 	builder.add(object_ptr<Ui::FlatLabel>(
 		builder.widget(),
 		rpl::single(QString(
-			"Offline: download language packs in-app (Mozilla models). "
-			"Optional decode: run scripts/setup-bergamot.sh or set DRAKEY_BERGAMOT_BIN. "
-			"See docs/OFFLINE_TRANSLATION.md")),
+			"Offline mode runs entirely in the app: download engine once, "
+			download language packs as needed. No terminal setup. "
+			"Chat text is never uploaded.")),
 		st::boxDividerLabel));
 }
 
@@ -68,15 +103,6 @@ void BuildLanguagePacks(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 			if (const auto l = AyuLanguage::currentInstance()) {
 				l->refreshCatalog();
 			}
-		},
-	});
-	ayu.add(builder, {
-		.title = rpl::single(QString("Download language pack")),
-		.label = rpl::single(QString("UI packs — offline MT packs are separate")),
-		.callback = [=](bool) {
-			Ui::Toast::Show(rpl::single(QString(
-				"UI language packs: optional. For offline message translation "
-				"download MT packs + optional Bergamot (docs/OFFLINE_TRANSLATION.md).")));
 		},
 	});
 }
