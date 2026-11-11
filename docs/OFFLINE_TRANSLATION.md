@@ -1,35 +1,52 @@
-# Offline translation (complete path)
+# Offline translation (optional Bergamot decode)
 
-## Flow
+## Two pieces
 
-1. **Download pack** (user action only) → Mozilla models via HTTPS GET → `tdata/drakey/mt_models/<pair>/`
-2. **Decode** on device via **Bergamot CLI** (no network, no text upload)
-3. Install engine binary once:
+| Piece | Required? | What |
+|-------|-----------|------|
+| Language/model **packs** | For offline MT | Download in app (Mozilla HTTPS GET, user only) |
+| **Bergamot** binary | Optional until you want local decode | Runs models on-device |
+
+Without the binary: packs can still download; translate fails closed **locally** (no cloud upload).
+
+## Quick setup (optional)
 
 ```bash
-# set path to your bergamot-translator build
+# from repo root
+bash scripts/setup-bergamot.sh
+
+# if you built/installed bergamot-translator yourself:
 export DRAKEY_BERGAMOT_BIN=/path/to/bergamot-translator
+# optional when using scripts/bergamot-wrapper.sh:
+export DRAKEY_BERGAMOT_REAL=/path/to/real-engine
 ```
 
-Or put `bergamot-translator` on `PATH`, or at:
-`tdata/../DrakeygramBergamot/bergamot-translator`
-
-## CLI contract expected by Drakeygram
+Or place the binary at:
 
 ```text
-bergamot-translator --model-dir <dir> --from <src> --to <trg> --input <file>
-# writes translation to stdout
+DrakeygramBergamot/bergamot-translator
 ```
 
-You can wrap the official Bergamot app in a small script that matches this interface.
+next to the app working directory (auto-discovered).
 
-## Provider
+## CLI contract
 
-Settings → translation provider → **Offline (local)** uses this path.
+```text
+$DRAKEY_BERGAMOT_BIN --model-dir <dir> --from <src> --to <trg> --input <file>
+# translation on stdout
+```
+
+`scripts/bergamot-wrapper.sh` adapts slightly different Bergamot CLIs to this shape.
+
+## In the app
+
+1. Settings → translation provider → **Offline**
+2. Download the language pairs you need
+3. Translate messages / chats (local decode if binary present)
 
 ## Privacy
 
 - No LibreTranslate server
-- No Google/Yandex
-- Network only for pack GET when you download
-- Decode never opens network
+- No Google/Yandex for this path
+- Network only for **pack download** when you ask
+- Decode never opens the network
